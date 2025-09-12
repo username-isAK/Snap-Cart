@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose =require("mongoose");
 
 const productSchema = new mongoose.Schema(
   {
@@ -17,8 +17,9 @@ const productSchema = new mongoose.Schema(
       min: 0,
     },
     category: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true
     },
     stock: {
       type: Number,
@@ -32,4 +33,4 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("Product", productSchema);
+module.exports = mongoose.model("Product", productSchema);
