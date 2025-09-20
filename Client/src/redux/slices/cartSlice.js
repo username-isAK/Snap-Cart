@@ -1,19 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 export const fetchCart = createAsyncThunk(
   "cart/fetch",
   async (token, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/cart", {
+      const res = await axios.get("http://localhost:5000/api/cart", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to fetch cart");
-      }
-      return await res.json();
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -22,21 +19,16 @@ export const addToCart = createAsyncThunk(
   "cart/add",
   async ({ productId, quantity, token }, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/cart", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId, quantity }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to add to cart");
-      }
-      return await res.json();
+      const res = await axios.post(
+        "http://localhost:5000/api/cart",
+        { productId, quantity },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -45,21 +37,16 @@ export const updateCartItem = createAsyncThunk(
   "cart/update",
   async ({ productId, quantity, token }, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/cart", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId, quantity }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to update cart item");
-      }
-      return await res.json();
+      const res = await axios.put(
+        "http://localhost:5000/api/cart",
+        { productId, quantity },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -68,21 +55,15 @@ export const removeCartItem = createAsyncThunk(
   "cart/remove",
   async ({ productId, token }, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/cart", {
-        method: "DELETE",
+      const res = await axios.delete("http://localhost:5000/api/cart", {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ productId }),
+        data: { productId },
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to remove from cart");
-      }
       return productId;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -107,7 +88,9 @@ const cartSlice = createSlice({
         state.items = action.payload.items || [];
       })
       .addCase(removeCartItem.fulfilled, (state, action) => {
-        state.items = state.items.filter((i) => i.product._id !== action.payload);
+        state.items = state.items.filter(
+          (i) => i.product._id !== action.payload
+        );
       })
       .addMatcher(
         (action) => action.type.startsWith("cart/") && action.type.endsWith("rejected"),

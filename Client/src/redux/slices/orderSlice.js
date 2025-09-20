@@ -1,24 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 export const createOrder = createAsyncThunk(
   "orders/create",
   async ({ orderData, token }, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(orderData),
+      const res = await axios.post("http://localhost:5000/api/orders", orderData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to create order");
-      }
-      return await res.json();
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -27,16 +19,12 @@ export const fetchMyOrders = createAsyncThunk(
   "orders/fetchMy",
   async (token, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/orders/myorders", {
+      const res = await axios.get("http://localhost:5000/api/orders/myorders", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to fetch my orders");
-      }
-      return await res.json();
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -45,16 +33,12 @@ export const fetchAllOrders = createAsyncThunk(
   "orders/fetchAll",
   async (token, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/orders", {
+      const res = await axios.get("http://localhost:5000/api/orders", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to fetch all orders");
-      }
-      return await res.json();
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -63,21 +47,16 @@ export const updateOrderStatus = createAsyncThunk(
   "orders/updateStatus",
   async ({ id, status, token }, { rejectWithValue }) => {
     try {
-      const res = await fetch(`/api/orders/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to update order status");
-      }
-      return await res.json();
+      const res = await axios.put(
+        `/api/orders/${id}/status`,
+        { status },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -115,7 +94,8 @@ const orderSlice = createSlice({
         if (index !== -1) state.allOrders[index] = action.payload;
       })
       .addMatcher(
-        (action) => action.type.startsWith("orders/") && action.type.endsWith("rejected"),
+        (action) =>
+          action.type.startsWith("orders/") && action.type.endsWith("rejected"),
         (state, action) => {
           state.loading = false;
           state.error = action.payload;

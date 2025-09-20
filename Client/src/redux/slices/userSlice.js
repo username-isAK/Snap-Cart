@@ -1,41 +1,33 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 export const registerUser = createAsyncThunk(
   "user/register",
   async (userData, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Registration failed");
-      }
-      return await res.json();
+      const res = await axios.post(
+        "http://localhost:5000/api/users/register",
+        userData,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
 
 export const loginUser = createAsyncThunk(
   "user/login",
-  async (credentials, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
+      const res = await axios.post("http://localhost:5000/api/users/login", {
+        email,
+        password,
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Login failed");
-      }
-      return await res.json(); // should include token
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response.data);
     }
   }
 );
@@ -45,13 +37,13 @@ export const fetchUserProfile = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const token = getState().user.token;
-      const res = await fetch("/api/users/me", {
+      if (!token) return rejectWithValue("No token found");
+      const res = await axios.get("http://localhost:5000/api/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch profile");
-      return await res.json();
+      return res.data; // user object
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -61,14 +53,13 @@ export const deleteUserProfile = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const token = getState().user.token;
-      const res = await fetch("/api/users/me", {
-        method: "DELETE",
+      if (!token) return rejectWithValue("No token found");
+      const res = await axios.delete("http://localhost:5000/api/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to delete profile");
-      return await res.json();
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.error || err.message);
     }
   }
 );
@@ -85,49 +76,50 @@ const userSlice = createSlice({
     logout: (state) => {
       state.userInfo = null;
       state.token = null;
+      state.loading = false;
+      state.error = null;
+      localStorage.removeItem("userInfo");
       localStorage.removeItem("token");
     },
   },
   extraReducers: (builder) => {
     builder
-
-      .addCase(registerUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(registerUser.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.userInfo = action.payload.user;
         state.token = action.payload.token;
         localStorage.setItem("token", action.payload.token);
       })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(registerUser.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
 
-      .addCase(loginUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      // Login
+      .addCase(loginUser.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.userInfo = action.payload.user;
         state.token = action.payload.token;
         localStorage.setItem("token", action.payload.token);
       })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(loginUser.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
 
+      .addCase(fetchUserProfile.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.loading = false;
         state.userInfo = action.payload;
+      })
+      .addCase(fetchUserProfile.rejected, (state) => {
+        state.loading = false;
+        state.userInfo = null;
+        state.token = null;
+        localStorage.removeItem("token");
       })
 
       .addCase(deleteUserProfile.fulfilled, (state) => {
         state.userInfo = null;
         state.token = null;
+        state.loading = false;
+        state.error = null;
         localStorage.removeItem("token");
       });
   },

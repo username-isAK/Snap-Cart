@@ -21,13 +21,22 @@ exports.createUser = async (req, res) => {
       name: req.body.name,
       email: req.body.email,
       password: secPass,
-      role: "user", 
+      role: "user",
     });
 
     const data = { user: { id: user.id, role: user.role } };
     const authtoken = jwt.sign(data, JWT_SECRET, { expiresIn: "1h" });
 
-    res.json({ success: true, authtoken });
+    res.json({
+      success: true,
+      token: authtoken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -49,7 +58,16 @@ exports.loginUser = async (req, res) => {
     const data = { user: { id: user.id, role: user.role } };
     const authtoken = jwt.sign(data, JWT_SECRET, { expiresIn: "1h" });
 
-    res.json({ success: true, authtoken });
+    res.json({
+      success: true,
+      token: authtoken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -58,10 +76,22 @@ exports.loginUser = async (req, res) => {
 
 exports.getUser = async (req, res) => {
   try {
+    console.log("Fetching user with ID:", req.user.id);
+
     const user = await User.findById(req.user.id).select("-password");
-    res.json(user);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
   } catch (error) {
-    console.error(error.message);
+    console.error("getUser error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
