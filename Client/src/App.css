@@ -1,0 +1,58 @@
+.nav-link.active-link {
+  color: #007bff;
+  font-weight: bold;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  position: relative;
+}
+
+.nav-link.active-link::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background-color: #007bff;
+  border-radius: 2px;
+}
+
+form{
+  background-color: rgb(255, 251, 249);
+}
+
+.card{
+    background-color: rgb(255, 251, 249);
+}
+
+.modal-body{
+    background-color: rgb(255, 251, 249);
+}
+
+.auth-container {
+  max-width: 400px;   
+  width: 100%;          
+  margin-left: 5%;
+  margin-right: 5%;  
+  padding-top: 5%;    
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  
+  align-items: center; 
+}
+
+.auth-card {
+  width: 80%;           
+  max-width: 400px;    
+  padding: 1.5rem;      
+  font-size: 1rem;    
+}
+
+.corner-tag {
+  position: absolute;
+  top: -10px; 
+  right: -20px; 
+  width: clamp(90px,6vw,110px); 
+  height: clamp(40px,3vh,60px);
+  object-fit: contain;
+}

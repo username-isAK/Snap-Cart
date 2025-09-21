@@ -10,9 +10,18 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ message: "Invalid category ID" });
     }
 
-    const product = new Product({name, description, price, category, stock, image,});
+    const product = new Product({
+      name,
+      description,
+      price,
+      category,
+      stock,
+      image,
+    });
 
-    const savedProduct = await product.save();
+    let savedProduct = await product.save();
+    savedProduct = await savedProduct.populate("category", "name");
+
     res.status(201).json(savedProduct);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -21,7 +30,7 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate("category", "name"); 
+    const products = await Product.find().populate("category", "name").sort({ updatedAt: -1 }); 
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
