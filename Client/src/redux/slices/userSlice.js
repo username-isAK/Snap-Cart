@@ -64,6 +64,23 @@ export const deleteUserProfile = createAsyncThunk(
   }
 );
 
+export const sendOtp = createAsyncThunk(
+  "user/sendOtp",
+  async (userData, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/users/send-otp",
+        userData,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || err.message);
+    }
+  }
+);
+
+
 const userSlice = createSlice({
   name: "user",
   initialState: {
@@ -71,6 +88,7 @@ const userSlice = createSlice({
     token: localStorage.getItem("token") || null,
     loading: false,
     error: null,
+    otpSent: false,
   },
   reducers: {
     logout: (state) => {
@@ -120,7 +138,13 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = null;
         localStorage.removeItem("token");
-      });
+      })
+      .addCase(sendOtp.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(sendOtp.fulfilled, (state) => {
+        state.loading = false;
+        state.otpSent = true;
+      })
+      .addCase(sendOtp.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
   },
 });
 

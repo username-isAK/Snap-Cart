@@ -10,6 +10,7 @@ import Products from "./Components/Admin/Products";
 import AdminLayout from "./Components/Admin/Adminlayout";
 import "./App.css";
 import Orders from "./Components/Admin/Orders";
+import UserDashboard from "./Components/User/UserDashboard";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="productslist" element={<Products />} />
           <Route path="orderslist" element={<Orders />} />
         </Route>
+        <Route path="/client" element={<UserDashboard/>}/>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

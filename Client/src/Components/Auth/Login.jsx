@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { loginUser } from "../../redux/slices/userSlice";
 
 export default function Login() {
@@ -29,10 +29,10 @@ export default function Login() {
 
   return (
     <div className="container auth-container" style={{ maxWidth: "40rem" }}>
-      <h1 className="mb-3 text-center" style={{backgroundColor:"white",padding:"0.5rem 0.75rem", borderRadius: "1rem",fontSize:"clamp(1.5rem, 5vw, 2.25rem)"}}>
+      <h1 className="mb-3 text-center" style={{backgroundColor:"white",padding:"0.3rem 0.55rem", borderRadius: "1rem",fontSize:"clamp(1.5rem, 5vw, 2.25rem)"}}>
         Welcome to Snap Cart!
       </h1>
-      <h3 className="mb-3 text-center" style={{backgroundColor:"white",padding:"0.5rem 0.75rem", borderRadius: "1rem",fontSize:"clamp(1.2rem, 3vw, 1.75rem)"}}>
+      <h3 className="mb-3 text-center" style={{backgroundColor:"white",padding:"0.3rem 0.55rem", borderRadius: "1rem",fontSize:"clamp(1.2rem, 3vw, 1.75rem)"}}>
         Please Login to continue
       </h3>
       <div className="position-relative card p-4 auth-card shadow-sm rounded-4">
@@ -80,28 +80,22 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="btn rounded-4 px-4 py-2" style={{backgroundColor:"rgba(255, 210, 180, 1)"}}>
+            className="btn rounded-4 px-4 py-2 text-light" style={{backgroundColor:"rgba(255, 123, 36, 1)"}}>
             <i className="bi bi-box-arrow-in-right"></i>{" "}
             {loading ? "Logging in..." : "Login"}
           </button>
           </div>
-          <div className="mt-3 d-flex">
-            <p
-              style={{
-                backgroundColor: "rgba(255,255,255,0.7)",
-                padding: "0.5rem 0.75rem",
-                borderRadius: "1rem",
-              }}>
+          <div className="mt-3 d-flex justify-content-center align-items-center">
+            <p className="mb-0 me-2">
               Don't have an account?
             </p>
-            <button className="btn btn-link" onClick={() => navigate("/signup")}>
+            <button className="btn btn-link p-0" onClick={() => navigate("/signup")}>
               Signup<i className="bi bi-arrow-right"></i>
             </button>
         </div>
         </form>
         {error && <p className="text-danger mt-2">{error}</p>}
       </div>
-
     </div>
   );
 }

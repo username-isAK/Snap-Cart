@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-const { createUser, loginUser, getUser, deleteUser } = require("../controllers/usercontroller");
+const { createUser, loginUser, getUser, deleteUser, sendOtp,verifyOtp } = require("../controllers/usercontroller");
 const fetchuser = require("../middleware/fetchuser");
 
 const router = express.Router();
@@ -9,7 +9,13 @@ router.post("/register",
   body("name").notEmpty(),
   body("email").isEmail(),
   body("password").isLength({ min: 5 }),
+  body("code").isLength({ min: 6, max: 6 }),
   createUser
+);
+
+router.post("/send-otp",
+  body("email").isEmail(),
+  sendOtp
 );
 
 router.post("/login",
