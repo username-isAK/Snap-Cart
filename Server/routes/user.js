@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-const { createUser, loginUser, getUser, deleteUser, sendOtp,verifyOtp } = require("../controllers/usercontroller");
+const { createUser, loginUser, getUser, deleteUser, sendOtp, sendResetOtp, resetPassword } = require("../controllers/usercontroller");
 const fetchuser = require("../middleware/fetchuser");
 
 const router = express.Router();
@@ -23,6 +23,9 @@ router.post("/login",
   body("password").exists(),
   loginUser
 );
+
+router.post("/send-reset-otp", sendResetOtp);
+router.post("/reset-password", resetPassword);
 
 router.get("/me", fetchuser, getUser);
 

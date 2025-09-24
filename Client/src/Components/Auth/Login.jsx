@@ -15,6 +15,9 @@ export default function Login() {
     if (userInfo && token && userInfo.role === "admin") {
       navigate("/admin", { replace: true });
     }
+    else if (userInfo && token && userInfo.role === "user"){
+      navigate("/client", {replace: true});
+    }
   }, [userInfo, token, navigate]);
 
   const handleChange = (e) => {
@@ -57,7 +60,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="mb-3 position-relative">
+          <div className="position-relative">
             <label htmlFor="password" className="form-label">
               Password
             </label>
@@ -76,6 +79,9 @@ export default function Login() {
               onClick={() => setShowPassword(!showPassword)}
             ></i>
           </div>
+          <div className="d-flex justify-content-end">
+          <button type="button" className="btn btn-link p-0 mb-3" style={{fontSize: "clamp(0.7rem, 1vw, 0.9rem)"}} onClick={()=> navigate("/reset-password")}>
+            Forgot Password?</button></div>
           <div className="d-flex justify-content-center">
           <button
             type="submit"

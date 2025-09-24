@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import AdminDashboard from "./Components/Admin/AdminDashboard";
 import Login from "./Components/Auth/Login";
 import Signup from "./Components/Auth/Signup";
+import ForgotPassword from "./Components/Auth/ForgotPass";
 import { fetchUserProfile } from "./redux/slices/userSlice";
 import Products from "./Components/Admin/Products";
 import AdminLayout from "./Components/Admin/Adminlayout";
@@ -23,10 +24,10 @@ export default function App() {
     }
   }, [token, userInfo, dispatch]);
 
-  const authPaths = ["/login", "/signup"];
+  const authPaths = ["/login", "/signup","/reset-password"];
   const isAuthPage = authPaths.includes(location.pathname);
 
-  return loading ? (
+  return token && !userInfo && loading ? (
     <p className="text-center mt-10">Loading...</p>
   ) : (
     <div
@@ -48,8 +49,8 @@ export default function App() {
           <Route path="orderslist" element={<Orders />} />
         </Route>
         <Route path="/client" element={<UserDashboard/>}/>
-
         <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/reset-password" element={<ForgotPassword/>}/>
       </Routes>
     </div>
   );

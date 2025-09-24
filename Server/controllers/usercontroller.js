@@ -106,6 +106,57 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+exports.sendResetOtp = async (req, res) => {
+  const { email } = req.body;
+  try{
+  const user = await User.findOne({ email });
+  if (!user) return res.status(400).json({ message: "User not found" });
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  await Otp.create({ email, code });
+  try {
+      await sendEmail(email, "Reset your password", 
+        `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;"></div>
+        <h2>Hello, ${user.name} 👋</h2>
+        <p>To reset your Password, please use the OTP below:</p>
+        <div style="background: #f4f4f4; padding: 15px; border-radius: 8px; font-size: 18px; text-align: center; font-weight: bold; color: #333; letter-spacing: 2px;">
+          ${code}
+        </div>
+        <p style="margin-top: 15px;">⏳ This OTP is valid for <strong>5 minutes</strong>. Please don’t share it with anyone.</p>
+        <p>Thank you for choosing <strong>Snap Cart</strong>!</p>
+        <hr style="margin-top: 20px;" />
+        <small style="color: #777;">If you didn’t request this, you can safely ignore this email.</small>
+        </div>`);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Failed to send OTP email" });
+    }
+
+  res.json({ message: "OTP sent" });
+  } catch(err){
+    console.error("sendOtp error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  const validOtp = await Otp.findOne({ email, code: otp });
+  if (!validOtp) return res.status(400).json({ message: "Invalid or expired OTP" });
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(400).json({ message: "User not found" });
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  await Otp.deleteMany({ email });
+
+  res.json({ message: "Password reset successful" });
+};
+
 exports.sendOtp = async (req, res) => {
   const { email,name } = req.body;
 
