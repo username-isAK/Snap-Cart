@@ -12,7 +12,11 @@ export const registerUser = createAsyncThunk(
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || err.message);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+     );
     }
   }
 );
@@ -27,7 +31,11 @@ export const loginUser = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+      );
     }
   }
 );
@@ -41,9 +49,13 @@ export const fetchUserProfile = createAsyncThunk(
       const res = await axios.get("http://localhost:5000/api/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return res.data; // user object
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || err.message);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+      );
     }
   }
 );
@@ -59,7 +71,11 @@ export const deleteUserProfile = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || err.message);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+      );
     }
   }
 );
@@ -75,7 +91,11 @@ export const sendOtp = createAsyncThunk(
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || err.message);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+      );
     }
   }
 );
@@ -87,7 +107,11 @@ export const sendForgotPasswordOtp = createAsyncThunk(
       const res = await axios.post("http://localhost:5000/api/users/send-reset-otp", { email });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || err.message);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+      );
     }
   }
 );
@@ -103,13 +127,14 @@ export const resetPassword = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || err.message);
+      return rejectWithValue(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : err.message)
+      );
     }
   }
 );
-
-
-
 
 const userSlice = createSlice({
   name: "user",
@@ -117,6 +142,7 @@ const userSlice = createSlice({
     userInfo: null,
     token: localStorage.getItem("token") || null,
     loading: false,
+    otploading: false,
     error: null,
     otpSent: false,
     passwordReset: false,
@@ -170,22 +196,22 @@ const userSlice = createSlice({
         state.error = null;
         localStorage.removeItem("token");
       })
-      .addCase(sendOtp.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(sendOtp.pending, (state) => { state.otploading = true; state.error = null; })
       .addCase(sendOtp.fulfilled, (state) => {
-        state.loading = false;
+        state.otploading = false;
         state.otpSent = true;
       })
-      .addCase(sendOtp.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+      .addCase(sendOtp.rejected, (state, action) => { state.otploading = false; state.error = action.payload; })
       .addCase(sendForgotPasswordOtp.pending, (state) => {
-        state.loading = true;
+        state.otploading = true;
         state.error = null;
       })
       .addCase(sendForgotPasswordOtp.fulfilled, (state) => {
-        state.loading = false;
+        state.otploading = false;
         state.otpSent = true;
       })
       .addCase(sendForgotPasswordOtp.rejected, (state, action) => {
-        state.loading = false;
+        state.otploading = false;
         state.error = action.payload;
       })
       

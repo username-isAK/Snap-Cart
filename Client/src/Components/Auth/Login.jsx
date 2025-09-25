@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { loginUser } from "../../redux/slices/userSlice";
 
 export default function Login() {
@@ -100,7 +100,7 @@ export default function Login() {
             </button>
         </div>
         </form>
-        {error && <p className="text-danger mt-2">{error}</p>}
+        {error && <p className="text-danger mt-2 fw-bold text-center">{error}</p>}
       </div>
     </div>
   );

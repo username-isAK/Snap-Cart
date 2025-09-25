@@ -13,39 +13,45 @@ exports.createUser = async (req, res) => {
 
   try {
     const otpDoc = await Otp.findOne({ email, code });
-    if (!otpDoc) return res.status(400).json({ message: "Invalid or expired OTP" });
+    if (!otpDoc) return res.status(400).json({ error: "Invalid or expired OTP" });
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser) return res.status(400).json({ error: "User already exists" });
 
     const salt = await bcrypt.genSalt(10);
     const secPass = await bcrypt.hash(password, salt);
 
-    const newUser = await User.create({ name, email, password: secPass, isVerified: true, role: "user" });
+    const newUser = await User.create({
+      name,
+      email,
+      password: secPass,
+      isVerified: true,
+      role: "user",
+    });
 
     await Otp.deleteMany({ email });
 
     const data = { user: { id: newUser.id, role: newUser.role } };
     const authtoken = jwt.sign(data, JWT_SECRET, { expiresIn: "1h" });
 
-    res.status(200).json({
+    res.status(201).json({
       message: "Email verified & account created successfully",
       token: authtoken,
       user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("createUser error:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 exports.loginUser = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty()) return res.status(400).json({ error: "Invalid credentials" });
 
   const { email, password } = req.body;
   try {
-    let user = await User.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ error: "User not found" });
 
     const passwordCompare = await bcrypt.compare(password, user.password);
@@ -55,37 +61,22 @@ exports.loginUser = async (req, res) => {
     const authtoken = jwt.sign(data, JWT_SECRET, { expiresIn: "1h" });
 
     res.json({
-      success: true,
+      message: "Login successful",
       token: authtoken,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("loginUser error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 exports.getUser = async (req, res) => {
   try {
-    console.log("Fetching user with ID:", req.user.id);
-
     const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
+    res.json(user);
   } catch (error) {
     console.error("getUser error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -99,23 +90,23 @@ exports.deleteUser = async (req, res) => {
 
     if (!deletedUser) return res.status(404).json({ error: "User not found" });
 
-    res.json({ success: true, message: "Account deleted successfully" });
+    res.json({ message: "Account deleted successfully" });
   } catch (error) {
-    console.error(error.message);
+    console.error("deleteUser error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 exports.sendResetOtp = async (req, res) => {
   const { email } = req.body;
-  try{
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "User not found" });
-
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await Otp.create({ email, code });
   try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "User not found" });
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await Otp.create({ email, code });
+
+    try {
       await sendEmail(email, "Reset your password", 
         `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;"></div>
         <h2>Hello, ${user.name} 👋</h2>
@@ -129,13 +120,13 @@ exports.sendResetOtp = async (req, res) => {
         <small style="color: #777;">If you didn’t request this, you can safely ignore this email.</small>
         </div>`);
     } catch (err) {
-      console.error(err);
+      console.error("sendEmail error:", err.message);
       return res.status(500).json({ error: "Failed to send OTP email" });
     }
 
-  res.json({ message: "OTP sent" });
-  } catch(err){
-    console.error("sendOtp error:", err);
+    res.json({ message: "OTP sent" });
+  } catch (err) {
+    console.error("sendResetOtp error:", err.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -143,31 +134,35 @@ exports.sendResetOtp = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
 
-  const validOtp = await Otp.findOne({ email, code: otp });
-  if (!validOtp) return res.status(400).json({ message: "Invalid or expired OTP" });
+  try {
+    const validOtp = await Otp.findOne({ email, code: otp });
+    if (!validOtp) return res.status(400).json({ error: "Invalid or expired OTP" });
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "User not found" });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "User not found" });
 
-  user.password = await bcrypt.hash(newPassword, 10);
-  await user.save();
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
 
-  await Otp.deleteMany({ email });
+    await Otp.deleteMany({ email });
 
-  res.json({ message: "Password reset successful" });
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("resetPassword error:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 exports.sendOtp = async (req, res) => {
-  const { email,name } = req.body;
+  const { email, name } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser) return res.status(400).json({ error: "User already exists" });
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     await Otp.deleteMany({ email });
-
     await Otp.create({ email, code: otpCode });
 
     try {
@@ -184,15 +179,13 @@ exports.sendOtp = async (req, res) => {
         <small style="color: #777;">If you didn’t request this, you can safely ignore this email.</small>
         </div>`);
     } catch (err) {
-      console.error(err);
+      console.error("sendEmail error:", err.message);
       return res.status(500).json({ error: "Failed to send OTP email" });
     }
 
     res.status(200).json({ message: "OTP sent to email. Please verify." });
   } catch (err) {
-    console.error("sendOtp error:", err);
+    console.error("sendOtp error:", err.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-

@@ -1,14 +1,13 @@
 import { useState,useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { registerUser } from "../../redux/slices/userSlice";
+import { registerUser, sendOtp } from "../../redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 
 export default function Signup() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state) => state.user);
+  const { loading, error, otploading } = useSelector((state) => state.user);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -38,24 +37,20 @@ export default function Signup() {
 
 
   const handleSendOtp = async () => {
-  if (!formData.email) {
-    alert("Please enter your email first!");
-    return;
-  }
-
-  try {
-    const res = await axios.post("http://localhost:5000/api/users/send-otp", {
-      email: formData.email,
-      name: formData.name
-    });
-
-    if (res.data.message) {
-      setOtpSent(true);
-      setTimeLeft(60);
+    if (!formData.email) {
+      alert("Please enter your email first!");
+      return;
     }
+
+    try {
+      const res = await dispatch(sendOtp({ email: formData.email, name: formData.name }));
+      if (res.meta.requestStatus === "fulfilled") {
+        setOtpSent(true);
+        setTimeLeft(60);
+      }
     } catch (err) {
       console.error(err);
-      alert("Failed to send OTP. Please Try again.");
+      alert("Failed to send OTP. Please try again.");
     }
   };
 
@@ -192,7 +187,7 @@ export default function Signup() {
               disabled={timeLeft>0}
               className="btn rounded-4 px-4 py-2 text-light me-3" style={{backgroundColor:"rgba(255, 123, 36, 1)"}}
               onClick={handleSendOtp}>
-              {loading ? "Sending..." : timeLeft > 0? `Resend OTP in ${timeLeft}s`: "Send OTP"}
+              {otploading ? "Sending..." : timeLeft > 0? `Resend OTP in ${timeLeft}s`: "Send OTP"}
             </button>
           <button
             type="submit"
@@ -210,7 +205,7 @@ export default function Signup() {
               </button>
         </div>
         </form>
-        {error && <p className="text-danger mt-2">{error}</p>}
+        {error && <p className="text-danger mt-2 fw-bold text-center">{error}</p>}
       </div>
     </div>
   );

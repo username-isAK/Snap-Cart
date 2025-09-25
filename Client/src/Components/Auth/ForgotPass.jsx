@@ -13,7 +13,7 @@ const ForgotPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading, error, otpSent } = useSelector((state) => state.user);
+  const { loading, error, otpSent, otploading } = useSelector((state) => state.user);
 
   useEffect(() => {
     if (timeLeft === 0) return;
@@ -23,10 +23,17 @@ const ForgotPassword = () => {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!email) return;
-    dispatch(sendForgotPasswordOtp({ email }));
-    setTimeLeft(60);
+    try {
+      const res= await dispatch(sendForgotPasswordOtp({ email }));
+      if(res.meta.requestStatus === "fulfilled"){
+      setTimeLeft(60);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send OTP. Please try again.");
+    }
   };
 
   const handleResetPassword = async () => {
@@ -123,7 +130,7 @@ const ForgotPassword = () => {
               type="submit"
               className="btn btn-success rounded-4 px-4 py-2 text-light mb-3"
               disabled={loading}>
-             Reset Password
+             {loading? "Resetting..." : "Reset password"}
             </button></div> </div>)}
             <div className="d-flex justify-content-center">
             <button
@@ -131,11 +138,11 @@ const ForgotPassword = () => {
               disabled={timeLeft>0}
               className="btn rounded-4 px-4 py-2 text-light" style={{backgroundColor:"rgba(255, 123, 36, 1)"}}
               onClick={handleSendOtp}>
-              {loading? "Sending..." : timeLeft > 0? `Resend OTP in ${timeLeft}s`: "Send OTP"}
+              {otploading? "Sending..." : timeLeft > 0? `Resend OTP in ${timeLeft}s`: "Send OTP"}
             </button></div>
       </form>
 
-      {error && <p className="text-danger mt-2">{error}</p>}
+      {error && <p className="text-danger mt-2 text-center fw-bold">{error}</p>}
       </div>
     </div>
   );
