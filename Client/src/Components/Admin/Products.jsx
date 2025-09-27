@@ -2,6 +2,7 @@ import { fetchProducts, deleteProduct, updateProduct } from "../../redux/slices/
 import { fetchCategories } from "../../redux/slices/categorySlice";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useRef, useState } from "react";
+import Confirm from "./Confirm";
 
 const Products = () => {
   const { token } = useSelector((state) => state.user);
@@ -10,12 +11,14 @@ const Products = () => {
   const dispatch = useDispatch();
 
   const [currentProduct, setCurrentProduct] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
     stock: "",
-    image: "",
+    images: [],
     category: "",
   });
 
@@ -27,9 +30,6 @@ const Products = () => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const handleDelete = (id) => {
-    dispatch(deleteProduct({ id, token }));
-  };
 
   const handleEdit = (prod) => {
     setCurrentProduct(prod);
@@ -38,8 +38,8 @@ const Products = () => {
       description: prod.description,
       price: prod.price,
       stock: prod.stock,
-      image: prod.image,
       category: prod.category?._id || "",
+      images: prod.images || [],
     });
     refOpen.current.click();
   };
@@ -49,20 +49,43 @@ const Products = () => {
   };
 
   const handleUpdate = () => {
-    dispatch(updateProduct({ id: currentProduct._id, productData: formData, token }));
+    const fd = new FormData();
+    fd.append("name", formData.name);
+    fd.append("description", formData.description);
+    fd.append("price", formData.price);
+    fd.append("stock", formData.stock);
+    fd.append("category", formData.category);
+
+    const oldImages = formData.images.filter(img => typeof img === "string");
+    fd.append("oldImages", JSON.stringify(oldImages));
+
+    formData.images.forEach(img => {
+      if (img instanceof File) fd.append("images", img);
+    });
+
+    dispatch(updateProduct({ id: currentProduct._id, productData: fd, token }));
     refClose.current.click();
   };
+  
+  const getImageSrc = (img) => {
+    if (img instanceof File) return URL.createObjectURL(img);
+    if (typeof img === "string") return `http://localhost:5000/${img.replace(/\\/g, "/")}`;
+    if (typeof img === "object" && img.url) return `http://localhost:5000/${img.url.replace(/\\/g, "/")}`;
+    return "";
+  };
+
 
   return (
     <div>
-      <h5 className="mt-5 mb-4">All Products</h5>
+      <h4 className="mt-5 mb-4">All Products</h4>
       <ul className="list-group">
         {Array.isArray(products) && products.length > 0 ? (
           products.map((prod) => (
             <li
-              className="list-group-item d-flex justify-content-between align-items-center"
+              className="list-group-item d-flex justify-content-between align-items-center fw-bold"
               key={prod._id}>
-              {prod.name}
+              <div>
+              {prod.name} <div className={prod.stock<3 ? "fw-normal mt-2 text-danger":"fw-normal mt-2 text-secondary"}>Currently in stock: {prod.stock}</div></div>
               <div>
                 <button
                   className="btn btn-secondary me-2"
@@ -71,7 +94,7 @@ const Products = () => {
                 </button>
                 <button
                   className="btn btn-danger"
-                  onClick={() => handleDelete(prod._id)}>
+                  onClick={() => {setDeleteId(prod._id);setShowConfirm(true)}}>
                   <i className="bi bi-trash"></i>
                 </button>
               </div>
@@ -134,7 +157,7 @@ const Products = () => {
                   value={formData.category}
                   onChange={handleChange}
                   className="form-control">
-                  <option value="">Select Category</option>
+                  <option value="" disabled>Select Category</option>
                   {categories.map((cat) => (
                     <option key={cat._id} value={cat._id}>
                       {cat.name}
@@ -160,13 +183,37 @@ const Products = () => {
                     className="form-control"/>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Image URL</label>
+                  <label className="form-label">Images</label>
                   <input
-                    type="text"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleChange}
-                    className="form-control"/>
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setFormData(prev => ({
+                      ...prev,
+                      images: [...prev.images, ...files]
+                    }));
+                  }}
+                  className="form-control"
+                /></div>
+
+                <div className="d-flex flex-wrap gap-2 mt-2">
+                  {formData.images.map((img, idx) => (
+                    <div key={idx} style={{ position: "relative" }}>
+                      <img src={getImageSrc(img)} alt="preview" width={70} height={70} />
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        style={{ position: "absolute", top: 0, right: 0, padding: "2px 5px" }}
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            images: prev.images.filter((_, i) => i !== idx)
+                          }));
+                        }}> × </button>
+                    </div>
+                  ))}
                 </div>
               </form>
             </div>
@@ -178,14 +225,18 @@ const Products = () => {
                 Close
               </button>
               <button type="button" className="btn btn-success" onClick={handleUpdate}>
-                <i class="bi bi-save2 me-1"></i>Save
+                <i className="bi bi-save2 me-1"></i>Save
               </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+      {showConfirm && <Confirm show={showConfirm}
+                                onClose={() => setShowConfirm(false)}
+                                onConfirm={() => {
+                                dispatch(deleteProduct({ id: deleteId, token }));
+                                setShowConfirm(false);}}
+                                message="Are you sure you want to delete this product?"/>}</div>);
 };
 
 export default Products;

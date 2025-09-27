@@ -17,7 +17,7 @@ export default function AddProductForm({ token }) {
     price: "",
     category: "",
     stock: 0,
-    image: "",
+    images: [],
   });
 
   useEffect(() => {
@@ -30,17 +30,30 @@ export default function AddProductForm({ token }) {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    dispatch(addProduct({ productData: formData, token }));
-    setFormData({
-      name: "",
-      description: "",
-      price: "",
-      category: "",
-      stock: 0,
-      image: "",
-    });
-  };
+  e.preventDefault();
+
+  const data = new FormData();
+  data.append("name", formData.name);
+  data.append("description", formData.description);
+  data.append("price", formData.price);
+  data.append("category", formData.category);
+  data.append("stock", formData.stock);
+
+  formData.images.forEach((file) => {
+    data.append("images", file);
+  });
+
+  dispatch(addProduct({ productData: data, token }));
+
+  setFormData({
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    stock: 0,
+    images: [],
+  });
+};
 
   if (catLoading) return <p className="text-center">Loading categories...</p>;
 
@@ -103,18 +116,48 @@ export default function AddProductForm({ token }) {
         className="form-control mb-2"/>
 
       <input
-        type="text"
-        name="image"
-        placeholder="Image URL"
-        value={formData.image}
-        onChange={handleChange}
-        required
+        type="file"
+        name="images"
+        multiple
+        accept="image/*"
+        onChange={(e) => {
+          const files = Array.from(e.target.files);
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, ...files],
+          }));
+        }}
         className="form-control mb-2"/>
+      <div className="d-flex flex-wrap gap-2">
+      {formData.images.map((file, idx) => (
+          <div key={idx} style={{ position: "relative", display: "inline-block", marginRight: "10px" }}>
+            <img
+              src={URL.createObjectURL(file)}
+              alt="preview"
+              width={70}
+              height={70}/>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                padding: "2px 5px",
+              }}
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  images: prev.images.filter((_, i) => i !== idx),
+                }))
+              }> × </button>
+          </div>
+        ))}</div>
 
       <button
         type="submit"
         disabled={productLoading}
-        className="btn btn-primary w-100">
+        className="btn btn-primary w-100 rounded-4">
         {productLoading ? "Adding..." : "Add Product"}
       </button>
 

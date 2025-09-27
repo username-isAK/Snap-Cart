@@ -164,8 +164,7 @@ export default function Signup() {
                 showConfirmPassword ? "bi-eye-slash" : "bi-eye"
               } position-absolute`}
               style={{ right: "10px", top: "38px", cursor: "pointer" }}
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            ></i>
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}></i>
           </div>
 
           {otpSent && (
@@ -177,8 +176,7 @@ export default function Signup() {
                 id="otp"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                required
-              />
+                required/>
             </div>
           )}
           <div className="d-flex justify-content-center">
@@ -193,7 +191,7 @@ export default function Signup() {
             type="submit"
             disabled={loading || !otpSent}
             className="btn rounded-4 px-4 py-2 text-light" style={{backgroundColor:"rgba(255, 123, 36, 1)"}}>
-            <i className="bi bi-person-plus-fill"></i>{" "}
+            <i className="bi bi-person-plus-fill me-1"></i>
             {loading ? "Signing up..." : "Signup"}
           </button></div>
             <div className="mt-3 d-flex justify-content-center align-items-center">

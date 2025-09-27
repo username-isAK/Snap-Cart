@@ -87,7 +87,7 @@ export default function Login() {
             type="submit"
             disabled={loading}
             className="btn rounded-4 px-4 py-2 text-light" style={{backgroundColor:"rgba(255, 123, 36, 1)"}}>
-            <i className="bi bi-box-arrow-in-right"></i>{" "}
+            <i className="bi bi-box-arrow-in-right me-1"></i>
             {loading ? "Logging in..." : "Login"}
           </button>
           </div>

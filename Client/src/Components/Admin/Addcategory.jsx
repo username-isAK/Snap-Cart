@@ -39,7 +39,7 @@ export default function AddCategoryForm({ token }) {
         onChange={handleChange}
         className="form-control mb-2"/>
 
-      <button type="submit" disabled={loading} className="btn btn-success w-100">
+      <button type="submit" disabled={loading} className="btn btn-success w-100 rounded-4">
         {loading ? "Adding..." : "Add Category"}
       </button>
 

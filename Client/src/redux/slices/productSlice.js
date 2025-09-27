@@ -19,7 +19,7 @@ export const addProduct = createAsyncThunk(
     try {
       const res = await axios.post("http://localhost:5000/api/products", productData, {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -30,13 +30,14 @@ export const addProduct = createAsyncThunk(
   }
 );
 
+
 export const updateProduct = createAsyncThunk(
   "products/update",
   async ({ id, productData, token }, { rejectWithValue }) => {
     try {
       const res = await axios.put(`http://localhost:5000/api/products/${id}`, productData, {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });

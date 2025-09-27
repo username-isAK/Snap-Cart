@@ -3,12 +3,14 @@ const Category = require("../schemas/Category");
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, image } = req.body;
+    const { name, description, price, category, stock } = req.body;
 
     const existingCategory = await Category.findById(category);
     if (!existingCategory) {
       return res.status(400).json({ message: "Invalid category ID" });
     }
+
+    const images = req.files ? req.files.map((file) => file.path) : [];
 
     const product = new Product({
       name,
@@ -16,17 +18,17 @@ exports.createProduct = async (req, res) => {
       price,
       category,
       stock,
-      image,
+      images,
     });
 
     let savedProduct = await product.save();
     savedProduct = await savedProduct.populate("category", "name");
-
     res.status(201).json(savedProduct);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 exports.getProducts = async (req, res) => {
   try {
@@ -49,31 +51,37 @@ exports.getProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, image } = req.body;
-
+    const { name, description, price, category, stock, oldImages } = req.body;
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     if (category) {
       const existingCategory = await Category.findById(category);
-      if (!existingCategory) {
-        return res.status(400).json({ message: "Invalid category ID" });
-      }
+      if (!existingCategory) return res.status(400).json({ message: "Invalid category ID" });
       product.category = category;
     }
 
-    product.name = name || product.name;
-    product.description = description || product.description;
-    product.price = price || product.price;
-    product.stock = stock ?? product.stock;
-    product.image = image || product.image;
+    let imagesToKeep = oldImages ? JSON.parse(oldImages) : [];
+
+    if (req.files && req.files.length > 0) {
+      imagesToKeep = imagesToKeep.concat(req.files.map((f) => f.path));
+    }
+
+    product.images = imagesToKeep;
+    if (name !== undefined) product.name = name;
+    if (description !== undefined) product.description = description;
+    if (price !== undefined) product.price = price;
+    if (stock !== undefined) product.stock = stock;
 
     const updatedProduct = await product.save();
+    await updatedProduct.populate("category", "name");
+
     res.json(updatedProduct);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 exports.deleteProduct = async (req, res) => {
   try {
