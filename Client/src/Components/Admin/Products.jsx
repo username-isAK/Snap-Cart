@@ -13,6 +13,8 @@ const Products = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -74,18 +76,56 @@ const Products = () => {
     return "";
   };
 
+  const filteredProducts = products.filter((prod) => {
+    const matchesSearch = prod.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory ? prod.category?._id === selectedCategory : true;
+    return matchesSearch && matchesCategory;
+  });
+
 
   return (
     <div>
       <h4 className="mt-5 mb-4">All Products</h4>
+      <div className="d-flex mb-3 gap-2">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="form-control"
+          style={{ maxWidth: "250px" }}/>
+
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="form-control"
+          style={{ maxWidth: "200px" }}>
+          <option value="">All Categories</option>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat._id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <ul className="list-group">
-        {Array.isArray(products) && products.length > 0 ? (
-          products.map((prod) => (
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((prod) => (
             <li
               className="list-group-item d-flex justify-content-between align-items-center fw-bold"
               key={prod._id}>
               <div>
-              {prod.name} <div className={prod.stock<3 ? "fw-normal mt-2 text-danger":"fw-normal mt-2 text-secondary"}>Currently in stock: {prod.stock}</div></div>
+                {prod.name}{" "}
+                <div
+                  className={
+                    prod.stock < 3
+                      ? "fw-normal mt-2 text-danger"
+                      : "fw-normal mt-2 text-secondary"
+                  }>
+                  Currently in stock: {prod.stock}
+                </div>
+              </div>
               <div>
                 <button
                   className="btn btn-secondary me-2"
@@ -94,14 +134,17 @@ const Products = () => {
                 </button>
                 <button
                   className="btn btn-danger"
-                  onClick={() => {setDeleteId(prod._id);setShowConfirm(true)}}>
+                  onClick={() => {
+                    setDeleteId(prod._id);
+                    setShowConfirm(true);
+                  }}>
                   <i className="bi bi-trash"></i>
                 </button>
               </div>
             </li>
           ))
         ) : (
-          <p>No products available</p>
+          <p>No products found</p>
         )}
       </ul>
 
