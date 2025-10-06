@@ -2,10 +2,14 @@ const Order = require("../schemas/Order");
 
 exports.createOrder = async (req, res) => {
   try {
-    const { products, totalPrice, status, paymentMethod } = req.body;
+    const { products, totalPrice, status, paymentMethod, address } = req.body;
 
     if (!products || products.length === 0) {
       return res.status(400).json({ error: "Products array is required" });
+    }
+
+    if (!address || !address.fullName || !address.phone) {
+      return res.status(400).json({ error: "Address and phone are required" });
     }
 
     const order = new Order({
@@ -14,6 +18,7 @@ exports.createOrder = async (req, res) => {
       totalPrice,
       status: status || "Pending",
       paymentMethod: paymentMethod || "COD",
+      address,
     });
 
     const savedOrder = await order.save();

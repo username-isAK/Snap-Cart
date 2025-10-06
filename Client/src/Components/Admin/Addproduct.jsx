@@ -95,12 +95,13 @@ export default function AddProductForm({ token }) {
         required
         className="form-select mb-2">
         <option value="">Select Category</option>
-        {Array.isArray(categories) && categories.length > 0 ? (
-          categories.map((cat) => (
-            <option key={cat._id} value={cat._id}>
-              {cat.name}
-            </option>
-          ))
+        {categories.length > 0 ? (
+          categories.slice().sort((a, b) => a.name.localeCompare(b.name))
+            .map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))
         ) : (
           <option disabled>No categories available</option>
         )}

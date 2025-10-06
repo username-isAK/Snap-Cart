@@ -15,6 +15,8 @@ const Products = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -85,35 +87,58 @@ const Products = () => {
 
   return (
     <div>
-      <h4 className="mt-5 mb-4">All Products</h4>
-      <div className="d-flex mb-3 gap-2">
+      <h4 className="mt-4 mb-4 rounded-4 p-2" style={{backgroundColor:"rgba(255,255,255,0.7)",display:"inline-block"}}>All Products</h4>
+      <div className="d-flex mb-3 gap-2"><i class="bi bi-search py-2"></i>
         <input
           type="text"
           placeholder="Search by name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="form-control"
-          style={{ maxWidth: "250px" }}/>
-
+          className="form-control rounded-3 shadow-sm"
+          style={{ width: "clamp(100px, 20vw, 250px)",fontSize: "clamp(0.8rem, 2vw, 1rem)" }}/>
+        <i class="bi bi-funnel py-2 ms-2"></i>
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="form-control"
-          style={{ maxWidth: "200px" }}>
+          className="form-control rounded-3 shadow-sm"
+          style={{width: "clamp(110px, 10vw, 170px)",fontSize: "clamp(0.8rem, 2vw, 1rem)" }}>
           <option value="">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat._id} value={cat._id}>
-              {cat.name}
-            </option>
-          ))}
+          {categories.slice().sort((a, b) => a.name.localeCompare(b.name))
+            .map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
         </select>
+        {selectedProducts.length > 0 && (
+          <button
+            className="btn btn-danger ms-2 shadow-sm"
+            onClick={() => {setShowBulkConfirm(true)}}
+            style={{fontSize: "clamp(0.8rem, 2vw, 1rem)"}}>
+            <i className="bi bi-trash me-1"></i> Delete Selected
+          </button>
+        )}
       </div>
 
       <ul className="list-group">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((prod) => (
+            <div className="d-flex flex-row">
+              <input
+                type="checkbox"
+                checked={selectedProducts.includes(prod._id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedProducts(prev => [...prev, prod._id]);
+                  } else {
+                    setSelectedProducts(prev => prev.filter(id => id !== prod._id));
+                  }
+                }}
+                className="form-check-input me-2 shadow-sm"
+              />
             <li
-              className="list-group-item d-flex justify-content-between align-items-center fw-bold"
+              className="list-group-item d-flex justify-content-between align-items-center fw-bold rounded-3 mb-2 shadow-sm"
+              style={{backgroundColor: "rgb(255, 251, 249)",width:"95%"}}
               key={prod._id}>
               <div>
                 {prod.name}{" "}
@@ -141,7 +166,7 @@ const Products = () => {
                   <i className="bi bi-trash"></i>
                 </button>
               </div>
-            </li>
+            </li></div>
           ))
         ) : (
           <p>No products found</p>
@@ -279,7 +304,21 @@ const Products = () => {
                                 onConfirm={() => {
                                 dispatch(deleteProduct({ id: deleteId, token }));
                                 setShowConfirm(false);}}
-                                message="Are you sure you want to delete this product?"/>}</div>);
+                                message="Are you sure you want to delete this product?"/>}
+      {showBulkConfirm && (<Confirm
+            show={showBulkConfirm}
+            onClose={() => setShowBulkConfirm(false)}
+            onConfirm={() => {
+              selectedProducts.forEach(id => {
+                dispatch(deleteProduct({ id, token }));
+              });
+              setSelectedProducts([]);
+              setShowBulkConfirm(false);
+            }}
+            message={`Are you sure you want to delete ${selectedProducts.length} products?`}
+          />
+        )}
+  </div>);     
 };
 
 export default Products;

@@ -6,6 +6,12 @@
   position: relative;
 }
 
+.nav-link:hover{
+  background-color: #dbebf9;
+  border-radius: 4px;
+  position: relative;
+}
+
 .nav-link.active-link::after {
   content: "";
   position: absolute;

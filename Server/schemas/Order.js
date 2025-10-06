@@ -1,4 +1,4 @@
-const mongoose =require("mongoose");
+const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
@@ -24,6 +24,15 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    address: {
+      fullName: { type: String, required: true },
+      phone: { type: String, required: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true },
+    },
     status: {
       type: String,
       enum: ["Pending", "Paid", "Shipped", "Delivered", "Cancelled"],
@@ -38,4 +47,4 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports= mongoose.model("Order", orderSchema);
+module.exports = mongoose.model("Order", orderSchema);
