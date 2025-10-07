@@ -43,16 +43,16 @@ export default function ProductsPage() {
                 <h5 className="card-title">{p.name}</h5>
                 <p className="card-text text-muted mb-2">{p.category?.name}</p>
                 <p className="fw-semibold fs-5 text-primary mb-3">₹{p.price}</p>
-                <button className="btn btn-outline-primary w-100">
+                <button className="btn btn-outline-secondary w-100">
                   Add to Cart
                 </button>
               </div>
               <ul className="list-group list-group-flush">
                 <li className="list-group-item">
-                  <strong>Stock:</strong> {p.stock ?? "N/A"}
+                  <strong>Stock:</strong> {p.stock ?? "Out of stock"}
                 </li>
                 <li className="list-group-item">
-                  <small>{p.description?.slice(0, 60) || "No description"}</small>
+                  {p.description.length>70?<small>{p.description.slice(0, 70)}...</small>:<small>{p.description}</small>}
                 </li>
               </ul>
             </div>

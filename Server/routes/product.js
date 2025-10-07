@@ -22,13 +22,43 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
-router.post("/", fetchuser, authorize("admin"), upload.array("images", 5),createProduct);
-router.put("/:id", fetchuser, authorize("admin"), upload.array("images", 5), updateProduct);
+router.post(
+  "/",
+  fetchuser,
+  authorize("admin"),
+  (req, res, next) => {
+
+    const multerFields = [{ name: "images", maxCount: 10 }];
+    for (let i = 0; i < 20; i++) {
+      for (let j = 0; j < 10; j++) {
+        multerFields.push({ name: `colorImages_${i}_${j}`, maxCount: 1 });
+      }
+    }
+
+    const dynamicUpload = multer({ storage }).fields(multerFields);
+    dynamicUpload(req, res, next);
+  },
+  createProduct
+);
+
+router.put(
+  "/:id",
+  fetchuser,
+  authorize("admin"),
+  (req, res, next) => {
+    const multerFields = [{ name: "images", maxCount: 10 }];
+    for (let i = 0; i < 20; i++) {
+      multerFields.push({ name: `colorImages_${i}`, maxCount: 10 });
+    }
+    const dynamicUpload = multer({ storage }).fields(multerFields);
+    dynamicUpload(req, res, next);
+  },
+  updateProduct
+);
 router.delete("/:id", fetchuser, authorize("admin"), deleteProduct);
 
 module.exports = router;
