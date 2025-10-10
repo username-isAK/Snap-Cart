@@ -113,25 +113,51 @@ const Products = () => {
   };
 
   const handleColorChange = (idx, field, value) => {
-    const arr = [...formData.availableColors];
-    if (field === "color") arr[idx].color = value;
-    if (field === "images") arr[idx].images = [...(arr[idx].images || []), ...value];
-    setFormData((p) => ({ ...p, availableColors: arr }));
+    const arr = formData.availableColors.map((colorObj, i) => {
+      if (i !== idx) return colorObj;
+
+      if (field === "images") {
+        return {
+          ...colorObj,
+          tempFiles: [...(colorObj.tempFiles || []), ...value],
+        };
+      } else {
+        return { ...colorObj, [field]: value };
+      }
+    });
+
+    setFormData((prev) => ({ ...prev, availableColors: arr }));
   };
 
   const addColor = () => setFormData((p) => ({ ...p, availableColors: [...p.availableColors, { color: "", images: [] }] }));
   const removeColor = (idx) => setFormData((p) => ({ ...p, availableColors: p.availableColors.filter((_, i) => i !== idx) }));
-  const removeColorImage = (colorIdx, imgIdx) => {
-    const arr = [...formData.availableColors];
-    arr[colorIdx].images.splice(imgIdx, 1);
-    setFormData((p) => ({ ...p, availableColors: arr }));
+  const removeColorImage = (colorIndex, imageIndex, isTemp = false) => {
+    setFormData((prev) => {
+      const updatedColors = prev.availableColors.map((color, i) => {
+        if (i !== colorIndex) return color;
+
+        if (isTemp) {
+          const updatedTempFiles = (color.tempFiles || []).filter(
+            (_, j) => j !== imageIndex
+          );
+          return { ...color, tempFiles: updatedTempFiles };
+        } else {
+          const updatedImages = (color.images || []).filter(
+            (_, j) => j !== imageIndex
+          );
+          return { ...color, images: updatedImages };
+        }
+      });
+
+      return { ...prev, availableColors: updatedColors };
+    });
   };
 
   const handleSizeChange = (idx, field, value) => {
-  const arr = [...formData.availableSizes];
-  arr[idx] = { ...arr[idx], [field]: value };
-  setFormData((p) => ({ ...p, availableSizes: arr }));
-};
+    const arr = [...formData.availableSizes];
+    arr[idx] = { ...arr[idx], [field]: value };
+    setFormData((p) => ({ ...p, availableSizes: arr }));
+  };
 
   const addSize = () => setFormData((p) => ({ ...p, availableSizes: [...p.availableSizes, ""] }));
   const removeSize = (idx) => setFormData((p) => ({ ...p, availableSizes: p.availableSizes.filter((_, i) => i !== idx) }));
@@ -165,16 +191,19 @@ const Products = () => {
         return acc;
       }, {});
 
-    fd.append(
-      "specifications",
-      JSON.stringify({ ...formData.specifications, details: detailsObj })
-    );
+    fd.append("specifications", JSON.stringify({ ...formData.specifications, details: detailsObj }));
     fd.append("availableColors", JSON.stringify(formData.availableColors));
     fd.append("availableSizes", JSON.stringify(formData.availableSizes));
     fd.append("variants", JSON.stringify(formData.variants));
 
     const oldImages = formData.images.filter((img) => typeof img === "string");
     fd.append("oldImages", JSON.stringify(oldImages));
+
+    formData.availableColors.forEach((c, i) => {
+      (c.tempFiles || []).forEach((file, j) => {
+        fd.append(`colorImages_${i}_${j}`, file);
+      });
+    });
 
     formData.images.forEach((img) => {
       if (img instanceof File) fd.append("images", img);
@@ -184,6 +213,7 @@ const Products = () => {
     refClose.current.click();
   };
 
+
   const getImageSrc = (img) => {
     if (img instanceof File) return URL.createObjectURL(img);
     if (typeof img === "string") return `http://localhost:5000/${img.replace(/\\/g, "/")}`;
@@ -191,7 +221,8 @@ const Products = () => {
   };
 
   const filteredProducts = products.filter((prod) => {
-    const matchesSearch = prod.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const name = prod?.name ? prod.name.toLowerCase() : "";
+    const matchesSearch = name.includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory ? prod.category?._id === selectedCategory : true;
     return matchesSearch && matchesCategory;
   });
@@ -385,23 +416,35 @@ const Products = () => {
                         style={{ width: "150px" }}/>
                       <button className="btn btn-sm btn-danger" onClick={() => removeColor(i)}>×</button>
                     </div>
-
                     <input
                       type="file"
                       multiple
                       accept="image/*"
                       onChange={(e) => handleColorChange(i, "images", Array.from(e.target.files))}
-                      className="form-control mb-2"/>
-
+                      className="form-control mb-2"
+                    />
                     <div className="d-flex flex-wrap gap-2">
-                      {cObj.images.map((img, idx) => (
+                    {cObj.images.map((img, idx) => (
+                      <div key={idx} style={{ position: "relative" }}>
+                        <img src={getImageSrc(img)} alt="preview" width={70} height={70} />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          style={{ position: "absolute", top: 0, right: 0, padding: "2px 5px" }}
+                          onClick={() => removeColorImage(i, idx)}>
+                          ×
+                        </button>
+                      </div>
+                      ))}
+
+                      {(cObj.tempFiles || []).map((file, idx) => (
                         <div key={idx} style={{ position: "relative" }}>
-                          <img src={getImageSrc(img)} alt="preview" width={70} height={70} />
+                          <img src={URL.createObjectURL(file)} alt="preview" width={70} height={70} />
                           <button
                             type="button"
                             className="btn btn-sm btn-danger"
                             style={{ position: "absolute", top: 0, right: 0, padding: "2px 5px" }}
-                            onClick={() => removeColorImage(i, idx)}>
+                            onClick={() => removeColorImage(i, idx, true)}>
                             ×
                           </button>
                         </div>

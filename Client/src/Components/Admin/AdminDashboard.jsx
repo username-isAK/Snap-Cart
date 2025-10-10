@@ -17,11 +17,11 @@ export default function AdminDashboard() {
     <>
     <div className="container py-4">
       <h1 className="mb-4 p-2 rounded-4" style={{backgroundColor:"rgba(255,255,255,0.7)",display:"inline-block"}}>Admin Dashboard</h1>
-      <div className="row g-4">
-        <div className="col-md-6">
+      <div className="col">
+        <div className="mb-5">
           <AddCategoryForm token={token} />
         </div>
-        <div className="col-md-6">
+        <div>
           <AddProductForm token={token} />
         </div>
       </div>

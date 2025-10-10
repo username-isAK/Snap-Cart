@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Usernavbar from "./UserNavbar";
+import Footer from "./Footer";
 
 const UserLayout = () => {
   const { token, userInfo } = useSelector((state) => state.user);
@@ -15,6 +16,7 @@ const UserLayout = () => {
       <div className="container mt-4">
         <Outlet /> 
       </div>
+      <Footer/>
     </>
   );
 };

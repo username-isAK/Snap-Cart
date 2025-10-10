@@ -16,23 +16,39 @@ exports.createProduct = async (req, res) => {
       variants,
     } = req.body;
 
+    const specs = specifications ? JSON.parse(specifications) : {};
+    const sizes = availableSizes ? JSON.parse(availableSizes) : [];
+    const colors = availableColors ? JSON.parse(availableColors) : [];
+    const variantList = variants ? JSON.parse(variants) : [];
+
     const existingCategory = await Category.findById(category);
-    if (!existingCategory)
+    if (!existingCategory) {
       return res.status(400).json({ message: "Invalid category ID" });
+    }
 
-    const images = req.files?.images
-      ? req.files.images.map(f => f.path.replace(/\\/g, "/"))
-      : [];
+    const files = req.files || [];
+    const mainImages = [];
+    const colorImagesMap = {};
 
-    const parsedColors = availableColors ? JSON.parse(availableColors) : [];
-    Object.keys(req.files || {}).forEach(field => {
-      if (field.startsWith("colorImages_")) {
-        const parts = field.split("_");
-        const colorIndex = parseInt(parts[1]);
-        if (!parsedColors[colorIndex].images) parsedColors[colorIndex].images = [];
-        parsedColors[colorIndex].images.push(...req.files[field].map(f => f.path.replace(/\\/g, "/")));
+    files.forEach((file) => {
+      const field = file.fieldname;
+
+      if (field === "images") {
+        mainImages.push(file.path.replace(/\\/g, "/"));
+      }
+
+      const match = field.match(/^colorImages_(\d+)_\d+$/);
+      if (match) {
+        const colorIndex = parseInt(match[1]);
+        if (!colorImagesMap[colorIndex]) colorImagesMap[colorIndex] = [];
+        colorImagesMap[colorIndex].push(file.path.replace(/\\/g, "/"));
       }
     });
+
+    const colorsWithImages = colors.map((color, i) => ({
+      ...color,
+      images: colorImagesMap[i] || [],
+    }));
 
     const product = new Product({
       name,
@@ -40,20 +56,21 @@ exports.createProduct = async (req, res) => {
       price,
       category,
       stock,
-      images,
-      specifications: specifications ? JSON.parse(specifications) : {},
-      availableSizes: availableSizes ? JSON.parse(availableSizes) : [],
-      availableColors: parsedColors,
-      variants: variants ? JSON.parse(variants) : [],
+      specifications: specs,
+      availableSizes: sizes,
+      availableColors: colorsWithImages,
+      variants: variantList,
+      images: mainImages, 
     });
 
-    const savedProduct = await product.save();
-    await savedProduct.populate("category", "name");
-
-    res.status(201).json(savedProduct);
+    await product.save();
+    res.status(201).json({
+      message: "Product created successfully",
+      product,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: error.message });
+    console.error("Error in createProduct:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -87,56 +104,70 @@ exports.updateProduct = async (req, res) => {
       name,
       description,
       price,
-      category,
       stock,
-      oldImages,
+      category,
       specifications,
-      availableSizes,
       availableColors,
+      availableSizes,
       variants,
+      oldImages,
     } = req.body;
 
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
+    const updatedData = {
+      name,
+      description,
+      price,
+      stock,
+      specifications: specifications ? JSON.parse(specifications) : {},
+      availableColors: availableColors ? JSON.parse(availableColors) : [],
+      availableSizes: availableSizes ? JSON.parse(availableSizes) : [],
+      variants: variants ? JSON.parse(variants) : [],
+      images: oldImages ? JSON.parse(oldImages) : [],
+    };
+
     if (category) {
-      const existingCategory = await Category.findById(category);
-      if (!existingCategory)
-        return res.status(400).json({ message: "Invalid category ID" });
-      product.category = category;
+      updatedData.category = category;
     }
 
-    let imagesToKeep = oldImages ? JSON.parse(oldImages) : [];
-    if (req.files?.images) imagesToKeep.push(...req.files.images.map(f => f.path.replace(/\\/g, "/")));
-    product.images = imagesToKeep;
-
-    const parsedColors = availableColors ? JSON.parse(availableColors) : [];
-    Object.keys(req.files || {}).forEach(field => {
-      if (field.startsWith("colorImages_")) {
-        const parts = field.split("_");
-        const colorIndex = parseInt(parts[1]);
-        if (!parsedColors[colorIndex].images) parsedColors[colorIndex].images = [];
-        parsedColors[colorIndex].images.push(...req.files[field].map(f => f.path.replace(/\\/g, "/")));
+    const colorImagesMap = {};
+    (req.files || []).forEach((file) => {
+      const match = file.fieldname.match(/colorImages_(\d+)_\d+/);
+      if (match) {
+        const colorIndex = parseInt(match[1]);
+        if (!colorImagesMap[colorIndex]) colorImagesMap[colorIndex] = [];
+        colorImagesMap[colorIndex].push(file.path.replace(/\\/g, "/"));
+      } else if (file.fieldname === "images") {
+        updatedData.images.push(file.path.replace(/\\/g, "/"));
       }
     });
-    product.availableColors = parsedColors;
 
-    if (name !== undefined) product.name = name;
-    if (description !== undefined) product.description = description;
-    if (price !== undefined) product.price = price;
-    if (stock !== undefined) product.stock = stock;
+    const parsedColors = updatedData.availableColors
+      .map((c, i) => ({
+        ...c,
+        images: [
+          ...(c.images || []),
+          ...(colorImagesMap[i] || []),
+        ],
+      }))
+      .filter(c => c.color && c.color.trim() !== "");
 
-    if (specifications) product.specifications = JSON.parse(specifications);
-    if (availableSizes) product.availableSizes = JSON.parse(availableSizes);
-    if (variants) product.variants = JSON.parse(variants);
+    updatedData.availableColors = parsedColors;
 
-    const updatedProduct = await product.save();
-    await updatedProduct.populate("category", "name");
+    if (!category || category === "") delete updatedData.category;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      updatedData,
+      { new: true }
+    ).populate("category", "name");
 
     res.json(updatedProduct);
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: error.message });
+    console.error("Update error:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../redux/slices/productSlice";
+import { Link } from "react-router-dom";
 
 export default function ProductsPage() {
   const dispatch = useDispatch();
@@ -33,26 +34,39 @@ export default function ProductsPage() {
         {products.map((p) => (
           <div className="col-12 col-sm-6 col-md-4 col-lg-3" key={p._id}>
             <div className="card shadow-sm h-100 border-0">
-              <img
-                src={getImageSrc(p.images?.[0])}
-                className="card-img-top p-3"
-                alt={p.name}
-                style={{ height: "200px", objectFit: "contain" }}
-              />
+              <Link
+                to={`/product/${p._id}`}
+                className="text-decoration-none text-dark">
+                <img
+                  src={getImageSrc(p.images?.[0])}
+                  className="card-img-top p-3"
+                  alt={p.name}
+                  style={{ height: "200px", objectFit: "contain" }}/>
+              </Link>
+
               <div className="card-body text-center">
-                <h5 className="card-title">{p.name}</h5>
-                <p className="card-text text-muted mb-2">{p.category?.name}</p>
+                <Link
+                  to={`/product/${p._id}`}
+                  className="text-decoration-none text-dark">
+                  <h5 className="card-title">{p.name}</h5>
+                </Link>
+
                 <p className="fw-semibold fs-5 text-primary mb-3">₹{p.price}</p>
                 <button className="btn btn-outline-secondary w-100">
                   Add to Cart
                 </button>
               </div>
+
               <ul className="list-group list-group-flush">
                 <li className="list-group-item">
                   <strong>Stock:</strong> {p.stock ?? "Out of stock"}
                 </li>
                 <li className="list-group-item">
-                  {p.description.length>70?<small>{p.description.slice(0, 70)}...</small>:<small>{p.description}</small>}
+                  {p.description.length > 70 ? (
+                    <small>{p.description.slice(0, 70)}...</small>
+                  ) : (
+                    <small>{p.description}</small>
+                  )}
                 </li>
               </ul>
             </div>

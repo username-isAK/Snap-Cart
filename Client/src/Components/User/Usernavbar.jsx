@@ -12,7 +12,7 @@ const Usernavbar = () => {
   };
   return (
     <div>
-      <nav className="navbar bg-body-tertiary">
+      <nav className="navbar navbar-expand-lg navbar-light px-3 shadow-sm pt-2 pb-2" style={{backgroundColor: "rgba(243, 252, 255, 0.8)"}}>
         <div className="container-fluid">
             <img
                 src="/SC_logo.png"

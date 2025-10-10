@@ -13,6 +13,7 @@ import "./App.css";
 import Orders from "./Components/Admin/Orders";
 import UserDashboard from "./Components/User/UserDashboard";
 import UserLayout from "./Components/User/Userlayout";
+import Productdetails from "./Components/User/Productdetails";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -50,16 +51,7 @@ export default function App() {
           backgroundAttachment: "fixed",
           zIndex: -2,
         }}/>
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: !isAuthPage? "rgba(255,255,255,0.1)":"",
-          zIndex: -1,
-        }}/>
+        
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -74,6 +66,7 @@ export default function App() {
         <Route path="/client" element={<UserLayout />}>
           <Route index element={<UserDashboard/>}/>
         </Route>
+        <Route path="/product/:id" element={<Productdetails />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>

@@ -20,8 +20,9 @@ export default function AddCategoryForm({ token }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-      <h2 className="h5 mb-3">Add Category</h2>
+    <div>
+    <h3 className="mb-0 p-2 rounded-2 shadow-sm" style={{backgroundColor:"rgba(255,255,255,0.7)",display:"inline-block"}}>Add Category</h3>
+    <form onSubmit={handleSubmit} className="card p-4 shadow-sm" style={{backgroundColor:"rgba(255,255,255,0.5)"}}>
 
       <input
         type="text"
@@ -39,11 +40,12 @@ export default function AddCategoryForm({ token }) {
         onChange={handleChange}
         className="form-control mb-2"/>
 
-      <button type="submit" disabled={loading} className="btn btn-success w-100 rounded-4">
+      <button type="submit" disabled={loading} className="btn btn-success w-50 rounded-4 d-block mx-auto">
         {loading ? "Adding..." : "Add Category"}
       </button>
 
       {error && <p className="text-danger mt-2">{error}</p>}
     </form>
+    </div>
   );
 }

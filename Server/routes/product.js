@@ -6,59 +6,34 @@ const {
   getProducts,
   getProductById,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 } = require("../controllers/productcontroller");
 
+const multer = require("multer");
 const router = express.Router();
 
-const multer = require("multer");
-
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 
+const upload = multer({ storage });
+
+const uploadAny = (req, res, next) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      console.error("Multer error:", err);
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
-router.post(
-  "/",
-  fetchuser,
-  authorize("admin"),
-  (req, res, next) => {
-
-    const multerFields = [{ name: "images", maxCount: 10 }];
-    for (let i = 0; i < 20; i++) {
-      for (let j = 0; j < 10; j++) {
-        multerFields.push({ name: `colorImages_${i}_${j}`, maxCount: 1 });
-      }
-    }
-
-    const dynamicUpload = multer({ storage }).fields(multerFields);
-    dynamicUpload(req, res, next);
-  },
-  createProduct
-);
-
-router.put(
-  "/:id",
-  fetchuser,
-  authorize("admin"),
-  (req, res, next) => {
-    const multerFields = [{ name: "images", maxCount: 10 }];
-    for (let i = 0; i < 20; i++) {
-      multerFields.push({ name: `colorImages_${i}`, maxCount: 10 });
-    }
-    const dynamicUpload = multer({ storage }).fields(multerFields);
-    dynamicUpload(req, res, next);
-  },
-  updateProduct
-);
+router.post("/", fetchuser, authorize("admin"), uploadAny, createProduct);
+router.put("/:id", fetchuser, authorize("admin"), uploadAny, updateProduct);
 router.delete("/:id", fetchuser, authorize("admin"), deleteProduct);
 
 module.exports = router;
