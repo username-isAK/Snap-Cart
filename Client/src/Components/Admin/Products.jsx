@@ -6,7 +6,7 @@ import Confirm from "./Confirm";
 
 const Products = () => {
   const { token } = useSelector((state) => state.user);
-  const { list: products = [] } = useSelector((state) => state.products);
+  const { list: products = [],loading: productLoading } = useSelector((state) => state.products);
   const { list: categories = [] } = useSelector((state) => state.categories);
   const dispatch = useDispatch();
 
@@ -226,6 +226,8 @@ const Products = () => {
     const matchesCategory = selectedCategory ? prod.category?._id === selectedCategory : true;
     return matchesSearch && matchesCategory;
   });
+
+  if (productLoading) return <p className="text-center"><img src="spinner.gif"/></p>;
 
   return (
     <div>

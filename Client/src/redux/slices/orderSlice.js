@@ -1,9 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const getToken = () => localStorage.getItem("token");
+
 export const createOrder = createAsyncThunk(
   "orders/create",
-  async ({ orderData, token }, { rejectWithValue }) => {
+  async (orderData, { rejectWithValue }) => {
+    const token = getToken();
+    if (!token) return rejectWithValue("User not logged in");
     try {
       const res = await axios.post("http://localhost:5000/api/orders", orderData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -17,7 +21,9 @@ export const createOrder = createAsyncThunk(
 
 export const fetchMyOrders = createAsyncThunk(
   "orders/fetchMy",
-  async (token, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
+    const token = getToken();
+    if (!token) return rejectWithValue("User not logged in");
     try {
       const res = await axios.get("http://localhost:5000/api/orders/myorders", {
         headers: { Authorization: `Bearer ${token}` },
@@ -31,7 +37,9 @@ export const fetchMyOrders = createAsyncThunk(
 
 export const fetchAllOrders = createAsyncThunk(
   "orders/fetchAll",
-  async (token, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
+    const token = getToken();
+    if (!token) return rejectWithValue("User not logged in");
     try {
       const res = await axios.get("http://localhost:5000/api/orders", {
         headers: { Authorization: `Bearer ${token}` },
@@ -45,14 +53,14 @@ export const fetchAllOrders = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   "orders/updateStatus",
-  async ({ id, status, token }, { rejectWithValue }) => {
+  async ({ id, status }, { rejectWithValue }) => {
+    const token = getToken();
+    if (!token) return rejectWithValue("User not logged in");
     try {
       const res = await axios.put(
-        `/api/orders/${id}/status`,
+        `http://localhost:5000/api/orders/${id}/status`,
         { status },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       return res.data;
     } catch (err) {
@@ -63,18 +71,11 @@ export const updateOrderStatus = createAsyncThunk(
 
 const orderSlice = createSlice({
   name: "orders",
-  initialState: {
-    myOrders: [],
-    allOrders: [],
-    loading: false,
-    error: null,
-  },
+  initialState: { myOrders: [], allOrders: [], loading: false, error: null },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(createOrder.pending, (state) => {
-        state.loading = true;
-      })
+      .addCase(createOrder.pending, (state) => { state.loading = true; })
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
         state.myOrders.push(action.payload);
@@ -88,14 +89,11 @@ const orderSlice = createSlice({
         state.allOrders = action.payload;
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        const index = state.allOrders.findIndex(
-          (o) => o._id === action.payload._id
-        );
+        const index = state.allOrders.findIndex((o) => o._id === action.payload._id);
         if (index !== -1) state.allOrders[index] = action.payload;
       })
       .addMatcher(
-        (action) =>
-          action.type.startsWith("orders/") && action.type.endsWith("rejected"),
+        (action) => action.type.startsWith("orders/") && action.type.endsWith("rejected"),
         (state, action) => {
           state.loading = false;
           state.error = action.payload;

@@ -14,6 +14,8 @@ import Orders from "./Components/Admin/Orders";
 import UserDashboard from "./Components/User/UserDashboard";
 import UserLayout from "./Components/User/Userlayout";
 import Productdetails from "./Components/User/Productdetails";
+import Cartbutton from "./Components/User/Cartbutton";
+import Checkoutpage from "./Components/User/Checkoutpage";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -32,7 +34,7 @@ export default function App() {
   const isAdminPage = adminPaths.includes(location.pathname);
 
   return token && !userInfo && loading ? (
-    <p className="text-center mt-10">Loading...</p>
+    <p className="text-center mt-10"><img src="spinner.gif"/></p>
   ) : (
     <div style={{ position: "relative", minHeight: "100vh" }}>
       <div
@@ -65,10 +67,12 @@ export default function App() {
 
         <Route path="/client" element={<UserLayout />}>
           <Route index element={<UserDashboard/>}/>
+          <Route path="checkout" element={<Checkoutpage/>} />
         </Route>
         <Route path="/product/:id" element={<Productdetails />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      <Cartbutton/>
     </div>
   );
 }

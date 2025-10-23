@@ -139,7 +139,7 @@ export default function AddProductForm({ token }) {
     });
   };
 
-  if (catLoading) return <p className="text-center">Loading categories...</p>;
+  if (catLoading) return <p className="text-center"><img src="spinner.gif"/></p>;
 
   return (
     <div>
