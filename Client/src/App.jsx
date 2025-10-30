@@ -67,9 +67,10 @@ export default function App() {
 
         <Route path="/client" element={<UserLayout />}>
           <Route index element={<UserDashboard/>}/>
+          <Route path="product/:id" element={<Productdetails />} />
           <Route path="checkout" element={<Checkoutpage/>} />
         </Route>
-        <Route path="/product/:id" element={<Productdetails />} />
+        
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       <Cartbutton/>

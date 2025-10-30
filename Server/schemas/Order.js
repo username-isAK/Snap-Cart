@@ -12,11 +12,30 @@ const orderSchema = new mongoose.Schema(
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
+          required: true,
+        },
+        sizevariantId: {
+          type: mongoose.Schema.Types.ObjectId,
+        },
+        colourvariantId:{
+          type: mongoose.Schema.Types.ObjectId,
         },
         quantity: {
           type: Number,
           required: true,
           min: 1,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+        selectedSize: {
+          size: String,
+          stock: Number,
+        },
+        selectedColor: {
+          color: String,
+          stock: Number,
         },
       },
     ],

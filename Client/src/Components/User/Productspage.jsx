@@ -1,12 +1,10 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../redux/slices/productSlice";
-import { Link, useNavigate } from "react-router-dom";
-import { addToCart } from "../../redux/slices/cartSlice";
+import { Link } from "react-router-dom";
 
 export default function ProductsPage() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { list: products, loading, error } = useSelector(
     (state) => state.products
   );
@@ -23,39 +21,6 @@ export default function ProductsPage() {
       ? normalized
       : `uploads/${normalized}`;
     return `http://localhost:5000/${path}`;
-  };
-
-  const handleAddToCart = (product) => {
-    if (!product?._id) return console.error("Product ID missing", product);
-
-    dispatch(
-      addToCart({
-        productId: product._id,
-        quantity: 1,
-        selectedSize: null,
-        selectedColor: null,
-      })
-    );
-
-    const cartBtn = document.getElementById("goToCartBtn");
-    if (cartBtn) {
-      cartBtn.style.display = "block";
-      setTimeout(() => (cartBtn.style.display = "none"), 3000);
-    }
-  };
-
-  const handleBuyNow = (product) => {
-    if (!product?._id) return console.error("Product ID missing", product);
-
-    dispatch(
-      addToCart({
-        productId: product._id,
-        quantity: 1,
-        selectedSize: null,
-        selectedColor: null,
-      })
-    );
-    navigate("/client/checkout");
   };
 
   if (loading)
@@ -78,7 +43,7 @@ export default function ProductsPage() {
           <div className="col-12 col-sm-6 col-md-4 col-lg-3" key={p._id}>
             <div className="card shadow-sm h-100 border-0">
               <Link
-                to={`/product/${p._id}`}
+                to={`/client/product/${p._id}`}
                 className="text-decoration-none text-dark"
               >
                 <img
@@ -91,30 +56,15 @@ export default function ProductsPage() {
 
               <div className="card-body text-center">
                 <Link
-                  to={`/product/${p._id}`}
+                  to={`/client/product/${p._id}`}
                   className="text-decoration-none text-dark"
                 >
                   <h5 className="card-title">{p.name}</h5>
                 </Link>
 
-                <p className="fw-semibold fs-5 text-primary mb-3">
+                <p className="fw-semibold fs-5 text-primary mb-2">
                   ₹{p.price}
                 </p>
-
-                <div className="d-flex gap-2">
-                  <button
-                    className="btn btn-outline-secondary w-50"
-                    onClick={() => handleAddToCart(p)}
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    className="btn btn-success w-50"
-                    onClick={() => handleBuyNow(p)}
-                  >
-                    Buy Now
-                  </button>
-                </div>
               </div>
 
               <ul className="list-group list-group-flush">

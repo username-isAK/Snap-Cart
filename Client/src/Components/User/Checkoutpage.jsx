@@ -45,10 +45,8 @@ export default function Checkoutpage({ buyNowProduct }) {
           toast.error("Failed to add product to cart");
         }
       }
-
       dispatch(fetchCart());
     };
-
     initCart();
   }, [dispatch, token, buyNowProduct]);
 
@@ -101,8 +99,9 @@ export default function Checkoutpage({ buyNowProduct }) {
       return {
         product: productId,
         quantity: it.quantity,
-        selectedSize: it.selectedSize?._id || null,
-        selectedColor: it.selectedColor?.color || null,
+        selectedSize: it.selectedSize || null,
+        selectedColor: it.selectedColor || null,
+        price: it.price || it.product.price,
       };
     });
 

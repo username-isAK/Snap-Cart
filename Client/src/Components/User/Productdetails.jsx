@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { fetchProductById } from "../../redux/slices/productSlice";
 import { addToCart } from "../../redux/slices/cartSlice";
-import Footer from "./Footer";
 
 export default function Productdetails() {
   const { id } = useParams();
@@ -26,11 +25,14 @@ export default function Productdetails() {
       const defaultColor = product.availableColors?.[0] || null;
       setSelectedColor(defaultColor);
       setSelectedSize(product.availableSizes?.[0] || null);
-      const imgs =
-        defaultColor?.images?.length > 0 ? defaultColor.images : product.images;
-      setMainImage(imgs?.[0] || null);
+
+      const imgs = defaultColor?.images?.length
+        ? defaultColor.images
+        : product.images || [];
+      setMainImage(imgs[0] || null);
     }
   }, [product]);
+
 
   if (loading || !product)
     return (
@@ -59,21 +61,34 @@ export default function Productdetails() {
   };
 
   const handleAddToCart = (prod) => {
-    if (!prod?._id) {
-      console.error("Product ID missing", prod);
-      return;
-    }
+    if (!prod?._id) return;
 
-    dispatch(
-      addToCart({
-        productId: prod._id,
-        quantity: 1,
-        selectedSize: selectedSize?._id || null,
-        selectedColor: selectedColor?.color || null,
-      })
-    );
+    const payload = {
+    productId: prod._id,
+    quantity: 1,
+    selectedSize: selectedSize
+      ? {
+          _id: selectedSize._id,
+          size: selectedSize.size,
+          price: selectedSize.price ?? prod.price,
+          stock: selectedSize.stock ?? 0,
+        }
+      : null,
+    selectedColor: selectedColor
+      ? {
+          _id: selectedColor._id,
+          color: selectedColor.color,
+          images: selectedColor.images || [],
+          stock: selectedColor.stock ?? 0,
+        }
+      : null,
+    price: selectedSize?.price ?? prod.price, 
+  };
 
-    const cartBtn = document.getElementById("goToCartBtn");
+
+  dispatch(addToCart(payload));
+
+  const cartBtn = document.getElementById("goToCartBtn");
     if (cartBtn) {
       cartBtn.style.display = "block";
       setTimeout(() => (cartBtn.style.display = "none"), 3000);
@@ -81,23 +96,42 @@ export default function Productdetails() {
   };
 
   const handleBuyNow = (prod) => {
-    if (!prod?._id) {
-      console.error("Product ID missing", prod);
+    if (!prod?._id) return;
+
+    if (prod.availableColors?.length > 0 && !selectedColor) {
+      alert("Please select a color before buying");
+      return;
+    }
+    if (prod.availableSizes?.length > 0 && !selectedSize) {
+      alert("Please select a size before buying");
       return;
     }
 
-    dispatch(
-      addToCart({
-        productId: prod._id,
-        quantity: 1,
-        selectedSize: selectedSize?._id || null,
-        selectedColor: selectedColor?.color || null,
-      })
-    );
-
+    const payload = {
+      productId: prod._id,
+      quantity: 1,
+      selectedSize: selectedSize
+        ? {
+            _id: selectedSize._id,
+            size: selectedSize.size,
+            price: selectedSize.price ?? prod.price,
+            stock: selectedSize.stock ?? 0,
+          }
+        : null,
+      selectedColor: selectedColor
+        ? {
+            _id: selectedColor._id,
+            color: selectedColor.color,
+            images: selectedColor.images || [],
+            stock: selectedColor.stock ?? 0,
+          }
+        : null,
+      price: selectedSize?.price ?? prod.price, 
+    };
+    dispatch(addToCart(payload));
     navigate("/client/checkout");
   };
-  
+ 
   const formatLabel = (key) =>
     String(key)
       .replace(/_/g, " ")
@@ -137,8 +171,12 @@ export default function Productdetails() {
               />
             </div>
 
-            <div className="d-flex justify-content-center flex-wrap gap-2 mb-3">
-              {selectedColor?.images?.map((img, i) => (
+           <div className="d-flex justify-content-center flex-wrap gap-2 mb-3">
+              {(
+                selectedColor?.images?.length
+                  ? selectedColor.images
+                  : product.images || []
+              ).map((img, i) => (
                 <div
                   key={`${img}-${i}`}
                   className={`border rounded-3 overflow-hidden ${
@@ -316,8 +354,6 @@ export default function Productdetails() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }

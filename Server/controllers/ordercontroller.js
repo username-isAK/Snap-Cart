@@ -9,42 +9,57 @@ exports.createOrder = async (req, res) => {
 
   try {
     const { products, totalPrice, status, paymentMethod, address } = req.body;
+    if (!products?.length) throw new Error("Products array is required");
 
-    if (!products || products.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Products array is required" });
-    }
-
-    if (!address || !address.fullName || !address.phone) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Address and phone are required" });
-    }
-
+    const orderProducts = [];
+    
     for (const item of products) {
-      const prod = await Product.findById(item.product).session(session);
-      if (!prod) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: `Product not found: ${item.product}` });
-      }
-      if (prod.stock < item.quantity) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: `Insufficient stock for ${prod.name}` });
-      }
-    }
+      const product = await Product.findById(item.product).session(session);
+      if (!product) throw new Error(`Product not found: ${item.product}`);
 
-    for (const item of products) {
-      const prod = await Product.findById(item.product).session(session);
-      prod.stock -= item.quantity;
-      await prod.save({ session });
+      let itemPrice = item.price ?? product.price;
+      let sizevariantId = null;
+      let colourvariantId = null;
+      let sizeData = item.selectedSize || null;
+      let colorData = item.selectedColor || null;
+
+      if (item.selectedSize?._id) {
+        const size = product.availableSizes.id(item.selectedSize._id);
+        if (!size) throw new Error(`Size not found for ${product.name}`);
+        if (size.stock < item.quantity) throw new Error(`Insufficient stock for ${product.name} (${size.size})`);
+        size.stock -= item.quantity;
+        sizevariantId = size._id;
+        itemPrice = size.price ?? itemPrice;
+      }
+
+      if (item.selectedColor?._id) {
+        const color = product.availableColors.id(item.selectedColor._id);
+        if (!color) throw new Error(`Color not found for ${product.name}`);
+        if (color.stock < item.quantity) throw new Error(`Insufficient stock for ${product.name} (${color.color})`);
+        color.stock -= item.quantity;
+        colourvariantId = color._id;
+      }
+
+      if (product.stock < item.quantity)
+        throw new Error(`Insufficient stock for ${product.name}`);
+      product.stock -= item.quantity;
+
+      await product.save({ session });
+
+      orderProducts.push({
+        product: product._id,
+        sizevariantId,
+        colourvariantId,
+        quantity: item.quantity,
+        price: itemPrice,
+        selectedSize: sizeData,
+        selectedColor: colorData,
+      });
     }
 
     const order = new Order({
       user: req.user.id,
-      products,
+      products: orderProducts,
       totalPrice,
       status: status || "Pending",
       paymentMethod: paymentMethod || "COD",
@@ -62,18 +77,17 @@ exports.createOrder = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    await savedOrder.populate("products.product", "name price");
+    await savedOrder.populate("products.product", "name images");
 
-    return res.status(201).json(savedOrder);
-  } catch (error) {
-    console.error("createOrder error:", error);
-    try {
-      await session.abortTransaction();
-    } catch (e) {}
+    res.status(201).json(savedOrder);
+  } catch (err) {
+    console.error("createOrder error:", err.message);
+    await session.abortTransaction();
     session.endSession();
-    return res.status(500).json({ error: "Server error" });
+    res.status(400).json({ error: err.message });
   }
 };
+
 
 exports.getMyOrders = async (req, res) => {
   try {
