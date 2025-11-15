@@ -1,6 +1,7 @@
 const Product = require("../schemas/Product");
 const Category = require("../schemas/Category");
 const path = require("path");
+const mongoose = require("mongoose");
 
 exports.createProduct = async (req, res) => {
   try {
@@ -76,14 +77,44 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find()
-      .populate("category", "name")
-      .sort({ updatedAt: -1 });
-    res.json(products);
+    const { search = "", page = "1", limit = "10", category } = req.query;
+
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (category) {
+      filter.category = mongoose.Types.ObjectId(category);
+    }
+
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate("category", "name")
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json({
+      products,
+      total,
+      currentPage: pageNum,
+      totalPages: Math.ceil(total / limitNum) || 1,
+    });
   } catch (error) {
+    console.error("getProducts error:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 exports.getProductById = async (req, res) => {
   try {

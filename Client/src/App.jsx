@@ -14,8 +14,8 @@ import Orders from "./Components/Admin/Orders";
 import UserDashboard from "./Components/User/UserDashboard";
 import UserLayout from "./Components/User/Userlayout";
 import Productdetails from "./Components/User/Productdetails";
-import Cartbutton from "./Components/User/Cartbutton";
 import Checkoutpage from "./Components/User/Checkoutpage";
+import AddressManager from "./Components/User/Addressmanager";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -70,10 +70,9 @@ export default function App() {
           <Route path="product/:id" element={<Productdetails />} />
           <Route path="checkout" element={<Checkoutpage/>} />
         </Route>
-        
+        <Route path="/addresses" element={<AddressManager/>}/>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-      <Cartbutton/>
     </div>
   );
 }

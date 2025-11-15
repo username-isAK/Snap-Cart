@@ -189,3 +189,69 @@ exports.sendOtp = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+exports.addAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.addresses.push(req.body);
+    await user.save();
+    res.json(user.addresses);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to add address" });
+  }
+};
+
+exports.getAddresses = async (req, res) => {
+  const user = await User.findById(req.user.id).select("addresses");
+  res.json(user.addresses);
+};
+
+exports.deleteAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.addresses = user.addresses.filter((a) => a._id.toString() !== req.params.id);
+    await user.save();
+    res.json(user.addresses);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete address" });
+  }
+};
+
+exports.setDefaultAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const { id } = req.params;
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.addresses.forEach((addr) => {
+      addr.isDefault = addr._id.toString() === id;
+    });
+
+    await user.save();
+    res.json({ message: "Default address updated", addresses: user.addresses });
+  } catch (err) {
+    console.error("setDefaultAddress error:", err.message);
+    res.status(500).json({ message: "Failed to set default address" });
+  }
+};
+
+exports.updateAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const { id } = req.params;
+
+    const address = user.addresses.id(id);
+    if (!address) return res.status(404).json({ message: "Address not found" });
+
+    Object.assign(address, req.body);
+    await user.save();
+
+    res.json({ message: "Address updated", addresses: user.addresses });
+  } catch (err) {
+    console.error("updateAddress error:", err.message);
+    res.status(500).json({ message: "Failed to update address" });
+  }
+};
+
+

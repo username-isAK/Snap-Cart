@@ -15,17 +15,11 @@ export default function Checkoutpage({ buyNowProduct }) {
   const navigate = useNavigate();
   const token = useSelector((state) => state.user.token);
   const cart = useSelector((state) => state.cart.items || []);
-  const [localCart, setLocalCart] = useState([]);
+  const { list: addresses } = useSelector((state) => state.addresses);
+  const defaultAddress = addresses.find((a) => a.isDefault) || addresses[0] || null;
 
-  const [address, setAddress] = useState({
-    fullName: "",
-    phone: "",
-    street: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "",
-  });
+  const [localCart, setLocalCart] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState("COD");
 
   useEffect(() => {
     if (!token) return;
@@ -41,7 +35,7 @@ export default function Checkoutpage({ buyNowProduct }) {
               selectedColor: buyNowProduct.selectedColor || null,
             })
           ).unwrap();
-        } catch (err) {
+        } catch {
           toast.error("Failed to add product to cart");
         }
       }
@@ -65,8 +59,8 @@ export default function Checkoutpage({ buyNowProduct }) {
             : it
         )
       );
-    } catch (err) {
-      toast.error(err || "Failed to update quantity");
+    } catch {
+      toast.error("Failed to update quantity");
     }
   };
 
@@ -74,10 +68,9 @@ export default function Checkoutpage({ buyNowProduct }) {
     const productId = item.product._id || item.product;
     try {
       await dispatch(removeCartItemThunk({ productId, token })).unwrap();
-
       setLocalCart((prev) => prev.filter((it) => (it.product._id || it.product) !== productId));
-    } catch (err) {
-      toast.error(err || "Failed to remove item");
+    } catch {
+      toast.error("Failed to remove item");
     }
   };
 
@@ -86,12 +79,16 @@ export default function Checkoutpage({ buyNowProduct }) {
     return sum + price * it.quantity;
   }, 0);
 
-  const handleInput = (e) => setAddress((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const getImageSrc = (img) => {
+    if (!img || typeof img !== "string") return "https://via.placeholder.com/200";
+    const normalized = img.replace(/\\/g, "/");
+    if (normalized.startsWith("http")) return normalized;
+    const path = normalized.startsWith("uploads/") ? normalized : `uploads/${normalized}`;
+    return `http://localhost:5000/${path}`;
+  };
 
   const placeOrder = async () => {
-    if (!address.fullName || !address.phone || !address.street) {
-      return toast.error("Please fill full name, phone, and street");
-    }
+    if (!defaultAddress) return toast.error("No address selected. Please set a default address.");
     if (!localCart.length) return toast.error("Cart is empty");
 
     const products = localCart.map((it) => {
@@ -108,31 +105,22 @@ export default function Checkoutpage({ buyNowProduct }) {
     const orderData = {
       products,
       totalPrice,
-      address,
-      paymentMethod: "COD",
+      address: defaultAddress,
+      paymentMethod,
     };
 
     try {
       await dispatch(createOrderThunk(orderData)).unwrap();
       toast.success("Order placed successfully!");
       navigate("/orders");
-    } catch (err) {
-      toast.error(err || "Failed to place order");
+    } catch {
+      toast.error("Failed to place order");
     }
   };
-
 
   if (!token) {
     return <div className="p-5 text-center">Please login to checkout.</div>;
   }
-
-  const getImageSrc = (img) => {
-    if (!img || typeof img !== "string") return "https://via.placeholder.com/200";
-    const normalized = img.replace(/\\/g, "/");
-    if (normalized.startsWith("http")) return normalized;
-    const path = normalized.startsWith("uploads/") ? normalized : `uploads/${normalized}`;
-    return `http://localhost:5000/${path}`;
-  };
 
   return (
     <div className="container py-5">
@@ -143,13 +131,11 @@ export default function Checkoutpage({ buyNowProduct }) {
             <p>Your cart is empty.</p>
           ) : (
             localCart.map((it) => {
-              const prod =
-                typeof it.product === "string"
-                  ? { _id: it.product, name: "Unknown Product", price: 0, images: [] }
-                  : it.product;
-
-              const img = it.selectedColor?.images?.[0] ?? prod.images?.[0] ?? "";
+              const prod = typeof it.product === "string"
+                ? { _id: it.product, name: "Unknown Product", price: 0, images: [] }
+                : it.product;
               const price = it.selectedSize?.price ?? prod.price ?? 0;
+              const img = it.selectedColor?.images?.[0] ?? prod.images?.[0] ?? "";
 
               return (
                 <div className="card mb-3 p-3" key={prod._id}>
@@ -160,22 +146,24 @@ export default function Checkoutpage({ buyNowProduct }) {
                       style={{ width: 80, height: 80, objectFit: "contain" }}
                     />
                     <div className="ms-3 flex-grow-1">
-                      <h6 className="mb-1">{prod.name}</h6>
-                      <p className="mb-1">₹{price}</p>
+                      <h6>{prod.name}</h6>
+                      <p className="text-success fw-bold">₹{price}</p>
                       <div className="d-flex align-items-center gap-2">
+                        <div className="btn-group" role="group" aria-label="Basic example">
                         <button
-                          className="btn btn-outline-secondary btn-sm"
+                          className="btn btn-outline-secondary btn-sm text-black"
                           onClick={() => changeQty(prod._id, it.quantity - 1)}
                         >
                           -
                         </button>
-                        <span>{it.quantity}</span>
+                        <button className="btn btn-outline-secondary disabled text-black fw-bold">{it.quantity}</button>
                         <button
-                          className="btn btn-outline-secondary btn-sm"
+                          className="btn btn-outline-secondary btn-sm text-black"
                           onClick={() => changeQty(prod._id, it.quantity + 1)}
                         >
                           +
                         </button>
+                        </div>
                         <button
                           className="btn btn-danger text-light ms-auto"
                           onClick={() => removeItem(it)}
@@ -183,8 +171,8 @@ export default function Checkoutpage({ buyNowProduct }) {
                           Remove
                         </button>
                       </div>
-                      {it.selectedSize && <p className="mb-0">Size: {it.selectedSize.size}</p>}
-                      {it.selectedColor && <p className="mb-0">Color: {it.selectedColor.color}</p>}
+                      {it.selectedSize && <p className="mb-0 mt-2"><strong>Size</strong>: {it.selectedSize.size}</p>}
+                      {it.selectedColor && <p className="mb-0 mt-2"><strong>Color</strong>: {it.selectedColor.color}</p>}
                     </div>
                   </div>
                 </div>
@@ -195,17 +183,24 @@ export default function Checkoutpage({ buyNowProduct }) {
 
         <div className="col-md-4">
           <div className="card p-3">
-            <h5 className="mb-3">Shipping Details</h5>
-            {["fullName","phone","street","city","state","postalCode","country"].map((field) => (
-              <input
-                key={field}
-                name={field}
-                placeholder={field.replace(/([A-Z])/g, " $1")}
-                className="form-control mb-2"
-                value={address[field]}
-                onChange={handleInput}
-              />
-            ))}
+            <h5>Shipping Address</h5>
+            {defaultAddress ? (
+              <p>
+                {defaultAddress.houseno}, {defaultAddress.street}, {defaultAddress.city}, {defaultAddress.state}, {defaultAddress.postalCode}, {defaultAddress.country}
+              </p>
+            ) : (
+              <p>No address selected</p>
+            )}
+
+            <h5 className="mt-3">Payment Method</h5>
+            <select
+              className="form-select"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <option value="COD">Cash on Delivery</option>
+              <option value="Online">Online Payment</option>
+            </select>
 
             <hr />
             <h5>Total: ₹{totalPrice}</h5>

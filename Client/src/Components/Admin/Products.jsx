@@ -41,9 +41,9 @@ const Products = () => {
   const refClose = useRef(null);
 
   useEffect(() => {
-    dispatch(fetchProducts());
+    dispatch(fetchProducts({ page: 1, limit: 9999 }));
     dispatch(fetchCategories());
-  }, [dispatch]);
+  }, []);
 
   const handleEdit = (prod) => {
     const detailsArray = prod.specifications?.details
@@ -129,7 +129,7 @@ const Products = () => {
     setFormData((prev) => ({ ...prev, availableColors: arr }));
   };
 
-  const addColor = () => setFormData((p) => ({ ...p, availableColors: [...p.availableColors, { color: "", images: [] }] }));
+  const addColor = () => setFormData((p) => ({ ...p, availableColors: [...p.availableColors, { color: "",stock:"", images: [] }] }));
   const removeColor = (idx) => setFormData((p) => ({ ...p, availableColors: p.availableColors.filter((_, i) => i !== idx) }));
   const removeColorImage = (colorIndex, imageIndex, isTemp = false) => {
     setFormData((prev) => {
@@ -414,6 +414,11 @@ const Products = () => {
                       <input
                         value={cObj.color}
                         onChange={(e) => handleColorChange(i, "color", e.target.value)}
+                        className="form-control me-2"
+                        style={{ width: "150px" }}/>
+                      <input
+                        value={cObj.stock}
+                        onChange={(e) => handleColorChange(i, "stock", e.target.value)}
                         className="form-control me-2"
                         style={{ width: "150px" }}/>
                       <button className="btn btn-sm btn-danger" onClick={() => removeColor(i)}>×</button>

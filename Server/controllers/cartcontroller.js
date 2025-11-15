@@ -109,11 +109,23 @@ exports.updateCartItem = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
     const userId = new mongoose.Types.ObjectId(req.user.id);
+
     const cart = await Cart.findOne({ user: userId });
     if (!cart) return res.status(404).json({ error: "Cart not found" });
 
     const item = cart.items.find(i => i.product.toString() === productId);
     if (!item) return res.status(404).json({ error: "Item not found in cart" });
+
+    // Fetch latest stock
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    const availableStock = 
+      item.selectedSize?.stock ?? item.selectedColor?.stock ?? product.stock ?? 0;
+
+    if (quantity > availableStock) {
+      return res.status(400).json({ error: `Only ${availableStock} items available in stock` });
+    }
 
     item.quantity = quantity;
     await cart.save();

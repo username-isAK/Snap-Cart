@@ -11,6 +11,7 @@ export default function Productdetails() {
   const { selectedProduct: product, loading } = useSelector(
     (state) => state.products
   );
+  const cartitems = useSelector((state) => state.cart.items || []);
 
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -63,27 +64,39 @@ export default function Productdetails() {
   const handleAddToCart = (prod) => {
     if (!prod?._id) return;
 
+    if(prod.stock<=0 || (selectedSize && selectedSize.stock<=0) || (selectedColor && selectedColor.stock<=0)){
+      alert("Selected product/variant is out of stock");
+      return;
+    }
+
+    const totalQty = cartitems.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (totalQty >= 20) {
+      alert("Cart limit reached! You can add a maximum of 20 total items.");
+      return;
+    }
+
     const payload = {
-    productId: prod._id,
-    quantity: 1,
-    selectedSize: selectedSize
-      ? {
-          _id: selectedSize._id,
-          size: selectedSize.size,
-          price: selectedSize.price ?? prod.price,
-          stock: selectedSize.stock ?? 0,
-        }
-      : null,
-    selectedColor: selectedColor
-      ? {
-          _id: selectedColor._id,
-          color: selectedColor.color,
-          images: selectedColor.images || [],
-          stock: selectedColor.stock ?? 0,
-        }
-      : null,
-    price: selectedSize?.price ?? prod.price, 
-  };
+      productId: prod._id,
+      quantity: 1,
+      selectedSize: selectedSize
+        ? {
+            _id: selectedSize._id,
+            size: selectedSize.size,
+            price: selectedSize.price ?? prod.price,
+            stock: selectedSize.stock ?? 0,
+          }
+        : null,
+      selectedColor: selectedColor
+        ? {
+            _id: selectedColor._id,
+            color: selectedColor.color,
+            images: selectedColor.images || [],
+            stock: selectedColor.stock ?? 0,
+          }
+        : null,
+      price: selectedSize?.price ?? prod.price, 
+    };
 
 
   dispatch(addToCart(payload));
@@ -98,12 +111,24 @@ export default function Productdetails() {
   const handleBuyNow = (prod) => {
     if (!prod?._id) return;
 
+    if(prod.stock<=0 || (selectedSize && selectedSize.stock<=0) || (selectedColor && selectedColor.stock<=0)){
+      alert("Selected product/variant is out of stock");
+      return;
+    }
+
     if (prod.availableColors?.length > 0 && !selectedColor) {
       alert("Please select a color before buying");
       return;
     }
     if (prod.availableSizes?.length > 0 && !selectedSize) {
       alert("Please select a size before buying");
+      return;
+    }
+
+    const totalQty = cartitems.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (totalQty >= 20) {
+      alert("Cart limit reached! You can add a maximum of 20 total items.");
       return;
     }
 
