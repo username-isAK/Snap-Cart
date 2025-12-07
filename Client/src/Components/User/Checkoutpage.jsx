@@ -50,6 +50,12 @@ export default function Checkoutpage({ buyNowProduct }) {
 
   const changeQty = async (productId, newQty) => {
     if (newQty < 1) return;
+    const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (totalQty >= 20) {
+      toast.error("Cart limit reached! You can add a maximum of 20 total items.");
+      return;
+    }
     try {
       await dispatch(updateCartItemThunk({ productId, quantity: newQty, token })).unwrap();
       setLocalCart((prev) =>
@@ -60,7 +66,7 @@ export default function Checkoutpage({ buyNowProduct }) {
         )
       );
     } catch {
-      toast.error("Failed to update quantity");
+      toast.error(`Only ${newQty-1} items in stock`);
     }
   };
 

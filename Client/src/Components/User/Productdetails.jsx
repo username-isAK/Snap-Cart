@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { fetchProductById } from "../../redux/slices/productSlice";
 import { addToCart } from "../../redux/slices/cartSlice";
+import { toast } from "react-toastify";
 
 export default function Productdetails() {
   const { id } = useParams();
@@ -61,18 +62,17 @@ export default function Productdetails() {
     return `http://localhost:5000/${relativePath}`;
   };
 
-  const handleAddToCart = (prod) => {
+  const handleAddToCart = async(prod) => {
     if (!prod?._id) return;
-
     if(prod.stock<=0 || (selectedSize && selectedSize.stock<=0) || (selectedColor && selectedColor.stock<=0)){
-      alert("Selected product/variant is out of stock");
+      toast.error("Selected product/variant is out of stock");
       return;
     }
-
+    const stock=selectedSize?.stock ?? selectedColor?.stock ?? prod.stock ?? 0;
     const totalQty = cartitems.reduce((sum, item) => sum + item.quantity, 0);
 
     if (totalQty >= 20) {
-      alert("Cart limit reached! You can add a maximum of 20 total items.");
+      toast.error("Cart limit reached! You can add a maximum of 20 total items.");
       return;
     }
 
@@ -99,7 +99,12 @@ export default function Productdetails() {
     };
 
 
-  dispatch(addToCart(payload));
+  try {
+    await dispatch(addToCart(payload)).unwrap(); 
+    toast.success("Product added to cart"); 
+  } catch (err) {
+    toast.error(`Only ${stock} items in stock`);
+  }
 
   const cartBtn = document.getElementById("goToCartBtn");
     if (cartBtn) {
@@ -112,7 +117,7 @@ export default function Productdetails() {
     if (!prod?._id) return;
 
     if(prod.stock<=0 || (selectedSize && selectedSize.stock<=0) || (selectedColor && selectedColor.stock<=0)){
-      alert("Selected product/variant is out of stock");
+      toast.error("Selected product/variant is out of stock");
       return;
     }
 
@@ -128,7 +133,7 @@ export default function Productdetails() {
     const totalQty = cartitems.reduce((sum, item) => sum + item.quantity, 0);
 
     if (totalQty >= 20) {
-      alert("Cart limit reached! You can add a maximum of 20 total items.");
+      toast.error("Cart limit reached! You can add a maximum of 20 total items.");
       return;
     }
 

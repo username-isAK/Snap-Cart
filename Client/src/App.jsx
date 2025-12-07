@@ -16,6 +16,8 @@ import UserLayout from "./Components/User/Userlayout";
 import Productdetails from "./Components/User/Productdetails";
 import Checkoutpage from "./Components/User/Checkoutpage";
 import AddressManager from "./Components/User/Addressmanager";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -37,6 +39,7 @@ export default function App() {
     <p className="text-center mt-10"><img src="spinner.gif"/></p>
   ) : (
     <div style={{ position: "relative", minHeight: "100vh" }}>
+      <ToastContainer className="mt-5" position="top-right" />
       <div
         style={{
           position: "fixed",
