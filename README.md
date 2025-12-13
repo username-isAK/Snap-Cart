@@ -8,8 +8,6 @@ I created this project **for learning purposes** — to understand full-stack de
 
 ## 🚀 Features
 
-- Built as a learning-focused project with scope for future improvements.
-
 ### 🛒 User Features
 
 - Browse & search products
@@ -26,6 +24,7 @@ I created this project **for learning purposes** — to understand full-stack de
 - Manage stock
 - View & manage orders
 
+#### Note: Built as a learning-focused project with a lot of scope for future improvements
 ---
 
 ## 🧰 Tech Stack
