@@ -18,6 +18,7 @@ import Checkoutpage from "./Components/User/Checkoutpage";
 import AddressManager from "./Components/User/Addressmanager";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Myorders from "./Components/User/Myorders";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -72,6 +73,7 @@ export default function App() {
           <Route index element={<UserDashboard/>}/>
           <Route path="product/:id" element={<Productdetails />} />
           <Route path="checkout" element={<Checkoutpage/>} />
+          <Route path="orders" element={<Myorders/>}/>
         </Route>
         <Route path="/addresses" element={<AddressManager/>}/>
         <Route path="*" element={<Navigate to="/login" replace />} />

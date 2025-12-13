@@ -88,7 +88,7 @@ const Orders = () => {
                 {expandedOrderId === order._id && (
                   <tr>
                     <td colSpan="7" className="p-2 bg-gray-50">
-                      <div className="border rounded-md p-3 text-left">
+                      <div className="d-flex flex-row gap-3 border rounded-md p-3 text-left">
                         {order.products.map((p, idx) => (
                           <div
                             key={idx}
@@ -111,11 +111,28 @@ const Orders = () => {
                             </div>
                           </div>
                         ))}
+                        
                       </div>
+                      <div className="mx-3 mb-2 mt-3">
+                          <strong>Delivery Address:</strong>
+                          <div className="small">
+                            <div>{order.address.fullName}</div>
+                            <div>{order.address.phone}</div>
+                            <div>
+                              {order.address.houseno}, {order.address.street}
+                            </div>
+                            <div>
+                              {order.address.city}, {order.address.state} -{" "}
+                              {order.address.postalCode}
+                            </div>
+                            <div>{order.address.country}</div>
+                          </div>
+                        </div>
                     </td>
                   </tr>
                 )}
               </React.Fragment>
+              
             ))}
           </tbody>
         </table>

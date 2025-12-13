@@ -1,45 +1,43 @@
 # 🌐 E-Commerce Website
 
-This project is a full-stack E-Commerce application built using
-MongoDB, Express.js, React.js, and Node.js.
+This project is a full-stack E-Commerce application built using MongoDB, Express.js, React.js, and Node.js.
 
-I created this project **for learning purposes** — to understand
-full-stack development, backend APIs, frontend state management,
-authentication, payments, and real application structure.
+I created this project **for learning purposes** — to understand full-stack development, backend APIs, frontend state management, authentication and real application structure.
 
 ---
 
 ## 🚀 Features
 
-## 🛒 User Features
+- Built as a learning-focused project with scope for future improvements.
 
-- Browse products with pagination / infinite scroll
-- Search and filter products
+### 🛒 User Features
+
+- Browse & search products
+- Choose product variants (e.g., size and color) during purchase
 - Add / remove items from cart
-- Update cart item quantities
 - Manage multiple delivery addresses
 - Select a default address
 - Checkout flow
-- Currently integrating test-mode payment gateway (Stripe / Razorpay)
-- Planning to improve and expand the app into a real-world production-ready version in the future
+- View orders
 
-## 🛍️ Admin Features
+### 🛍️ Admin Features
 
 - Add / edit / delete products
 - Manage stock
-- View orders
+- View & manage orders
 
 ---
 
 ## 🧰 Tech Stack
 
-## Frontend
+### Frontend
 
 - React + Vite
 - Redux Toolkit for state management
 - Bootstrap / Custom UI
+- The UI is functional and clean, with a focus on usability. While not highly polished, it provides a consistent and practical user experience across the application.
 
-## Backend
+### Backend
 
 - Node.js
 - Express.js

@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../redux/slices/userSlice";
+import { logout, fetchUserProfile } from "../../redux/slices/userSlice";
 import { fetchProducts } from "../../redux/slices/productSlice";
 import { fetchCategories } from "../../redux/slices/categorySlice";
 import { setSearch, setCategory } from "../../redux/slices/filterSlice";
@@ -13,16 +13,18 @@ const Usernavbar = () => {
 
   const { list: addresses } = useSelector((state) => state.addresses);
   const defaultAddress = addresses.find((a) => a.isDefault) || addresses[0];
-
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const { search, category } = useSelector((state) => state.filters);
   const categories = useSelector((state) => state.categories.list || []);
   const cartItems = useSelector((state) => state.cart.items || []);
   const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const user = useSelector((state) => state.user.userInfo);
 
   useEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchAddresses());
-  }, [dispatch]);
+    if (!user) dispatch(fetchUserProfile());
+  }, [dispatch, user]);
 
   const handleSearch = () => {
     dispatch(fetchProducts({
@@ -39,6 +41,7 @@ const Usernavbar = () => {
   };
 
   return (
+    <>
     <nav
       className="navbar navbar-expand-lg navbar-light px-3 shadow-sm pt-2 pb-2"
       style={{ backgroundColor: "rgba(243, 252, 255, 0.8)" }}
@@ -122,18 +125,100 @@ const Usernavbar = () => {
               </span>
             )}
           </div>
-
-          <button
-            onClick={handleLogout}
-            className="btn btn-danger"
-            style={{ fontSize: "clamp(0.8rem, 2vw, 1rem)" }}
-          >
-            <i className="bi bi-box-arrow-left"></i> Logout
-          </button>
+          <img
+              src="/default-profile.jpg"
+              alt="Profile"
+              title="View Profile"
+              onClick={() => setShowProfileModal(true)}
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                cursor: "pointer",
+              }}
+            />
         </div>
-
       </div>
     </nav>
+    {showProfileModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={() => setShowProfileModal(false)}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content p-3">
+              <div className="modal-header">
+                <h5 className="modal-title">My Profile</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowProfileModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {user ? (
+                  <div>
+                    <p>
+                      <strong>Name:</strong> {user.name}
+                    </p>
+                    <p>
+                      <strong>Email:</strong> {user.email}
+                    </p>
+                    <p>
+                      <strong>Mobile:</strong> {defaultAddress ? defaultAddress.phone : "N/A"}
+                    </p>
+                    {addresses.length === 0 ? (
+                      <p>No address added</p>
+                    ) : (
+                      addresses.map((addr) => (
+                        <div
+                          key={addr._id}
+                          className={`border rounded p-2 mb-2 ${
+                            addr.isDefault ? "border-success bg-light" : ""
+                          }`}
+                        >
+                          <div className="d-flex justify-content-between align-items-center">
+                            <strong>{addr.fullName}</strong>
+                            {addr.isDefault && (
+                              <span className="badge bg-success">Default</span>
+                            )}
+                          </div>
+
+                          <div className="small">
+                            <div>{addr.phone}</div>
+                            <div>{addr.houseno}, {addr.street}</div>
+                            <div>
+                              {addr.city}, {addr.state} - {addr.postalCode}
+                            </div>
+                            <div>{addr.country}</div>
+                            <div className="text-muted">{addr.tag}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <button className="btn btn-link" onClick={()=>{navigate("orders"); setShowProfileModal(false)}}>View your orders</button>
+                  </div>
+                ) : (
+                  <p>Loading...</p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-danger"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
   );
 };
 

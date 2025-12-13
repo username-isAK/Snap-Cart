@@ -118,7 +118,7 @@ export default function Checkoutpage({ buyNowProduct }) {
     try {
       await dispatch(createOrderThunk(orderData)).unwrap();
       toast.success("Order placed successfully!");
-      navigate("/orders");
+      navigate("orders");
     } catch {
       toast.error("Failed to place order");
     }
